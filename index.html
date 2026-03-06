@@ -1,0 +1,1706 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Oferta Académica UNAJ - 2026</title>
+    <link rel="stylesheet" href="styles.css" />
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="titulo-unaj">
+          <h1>Oferta Académica UNAJ - 2026</h1>
+          <span>Los horarios y aulas pueden estar sujetos a modificación.</span>
+        </div>
+        <input
+          id="search"
+          type="search"
+          class="search-box"
+          placeholder=" Buscar materia o código..."
+        />
+        <div style="margin-top: 10px; display: flex; gap: 5px">
+          <button
+            id="btn-info"
+            class="btn btn-primary"
+            style="flex: 1; font-size: 12px"
+            onclick="switchTab('info')"
+          >
+            Informática
+          </button>
+          <button
+            id="btn-basic"
+            class="btn"
+            style="flex: 1; font-size: 12px"
+            onclick="switchTab('basic')"
+          >
+            Básicas
+          </button>
+        </div>
+      </div>
+      <div id="lista-materias" class="list-container"></div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div>
+          <span
+            id="materia-seleccionada"
+            style="font-weight: bold; font-size: 1.1rem"
+          >
+            Seleccioná una materia
+          </span>
+        </div>
+        <div style="display: flex; gap: 10px">
+          <button id="toggleCalendarView" class="btn">
+            <i class="fas fa-calendar-alt"></i> Mostrar planificador
+          </button>
+
+          <button id="refresh" class="btn">
+            <i class="fas fa-sync-alt"></i> Refrescar
+          </button>
+        </div>
+      </div>
+
+      <div class="content-area">
+        <div id="plannerPanel" style="display: none; margin-bottom: 30px">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 15px;
+            "
+          >
+            <button
+              id="clearCalendar"
+              class="btn"
+              style="background: #da3633; color: white; border: none"
+            >
+              <i class="fas fa-trash-alt"></i> Borrar Todo
+            </button>
+
+            <button
+              id="downloadPDF"
+              class="btn"
+              style="background: #2da44e; color: white; border: none"
+            >
+              <i class="fas fa-file-pdf"></i> Descargar PDF
+            </button>
+          </div>
+          <!-- Reemplazar: <div id="calendar"></div> -->
+          <div id="planner">
+            <table
+              class="planner-table"
+              style="width: 100%; border-collapse: collapse"
+            >
+              <thead>
+                <tr>
+                  <th style="width: 80px">Hora</th>
+                  <th>Lunes</th>
+                  <th>Martes</th>
+                  <th>Miércoles</th>
+                  <th>Jueves</th>
+                  <th>Viernes</th>
+                  <th>Sábado</th>
+                </tr>
+              </thead>
+              <tbody id="planner-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="comisionesResult">
+          <div class="no-selection">
+            <h2 style="font-size: 4rem">🏫</h2>
+            <p>
+              Seleccioná una materia para ver profesores, edad y comisiones.
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      /* ----------------- Notificaciones y modal de confirmación ----------------- */
+
+      (function initUIHelpers() {
+        // --- toasts ---
+        if (!document.querySelector(".toast-container")) {
+          const tc = document.createElement("div");
+          tc.className = "toast-container";
+          document.body.appendChild(tc);
+        }
+        window.showToast = function (type = "info", message = "", opts = {}) {
+          const container = document.querySelector(".toast-container");
+          if (!container) return;
+          const toast = document.createElement("div");
+          toast.className = `toast ${type}`;
+          toast.innerHTML = `<div class="msg">${message}</div><button class="close" aria-label="Cerrar">&times;</button>`;
+          container.appendChild(toast);
+
+          const autoClose =
+            typeof opts.duration === "number" ? opts.duration : 4200;
+          const close = () => {
+            toast.style.transition = "opacity .18s, transform .18s";
+            toast.style.opacity = "0";
+            toast.style.transform = "translateX(12px)";
+            setTimeout(() => toast.remove(), 200);
+          };
+
+          toast.querySelector(".close").addEventListener("click", close);
+          if (autoClose > 0) {
+            setTimeout(close, autoClose);
+          }
+          return {
+            close,
+          };
+        };
+
+        // --- modal confirm (async) ---
+        if (!document.getElementById("modal-confirm-overlay")) {
+          const ov = document.createElement("div");
+          ov.id = "modal-confirm-overlay";
+          ov.className = "modal-overlay";
+          ov.innerHTML = `
+      <div class="modal" role="dialog" aria-modal="true">
+        <h3 id="modal-confirm-title">Confirmar</h3>
+        <p id="modal-confirm-message">¿Estás seguro?</p>
+        <div class="modal-actions">
+          <button class="btn-modal cancel" id="modal-confirm-cancel">Cancelar</button>
+          <button class="btn-modal confirm" id="modal-confirm-ok">Eliminar</button>
+        </div>
+      </div>
+    `;
+          document.body.appendChild(ov);
+        }
+
+        window.showConfirm = function (message = "¿Continuar? ", options = {}) {
+          return new Promise((resolve) => {
+            const ov = document.getElementById("modal-confirm-overlay");
+            const titleEl = ov.querySelector("#modal-confirm-title");
+            const msgEl = ov.querySelector("#modal-confirm-message");
+            const okBtn = ov.querySelector("#modal-confirm-ok");
+            const cancelBtn = ov.querySelector("#modal-confirm-cancel");
+
+            titleEl.textContent = options.title || "Confirmar";
+            msgEl.textContent = message;
+            okBtn.textContent = options.okText || "Confirmar";
+            cancelBtn.textContent = options.cancelText || "Cancelar";
+
+            function cleanup(result) {
+              ov.style.display = "none";
+              okBtn.removeEventListener("click", okHandler);
+              cancelBtn.removeEventListener("click", cancelHandler);
+              ov.removeEventListener("click", overlayHandler);
+              resolve(result);
+            }
+
+            function okHandler(e) {
+              e.stopPropagation();
+              cleanup(true);
+            }
+            function cancelHandler(e) {
+              e.stopPropagation();
+              cleanup(false);
+            }
+            function overlayHandler(e) {
+              // click fuera del modal cancela
+              if (e.target === ov) cleanup(false);
+            }
+
+            okBtn.addEventListener("click", okHandler);
+            cancelBtn.addEventListener("click", cancelHandler);
+            ov.addEventListener("click", overlayHandler);
+
+            ov.style.display = "flex";
+            // focus en boton confirmar por accesibilidad
+            setTimeout(() => okBtn.focus(), 40);
+          });
+        };
+      })();
+      (() => {
+        const SUBJECTS_URL_INFO =
+          "https://siusync.espacios.unaj.edu.ar/api/v1/Subject?carrerId=10&Limit=200&AcademicPeriodId=6&sortField=name&sortDirection=asc";
+        const SUBJECTS_URL_BASIC =
+          "https://siusync.espacios.unaj.edu.ar/api/v1/Subject?carrerId=112&Limit=200&AcademicPeriodId=6&sortField=name&sortDirection=asc";
+        const COMISIONES_URL =
+          "https://siusync.espacios.unaj.edu.ar/api/v1/Comisiones";
+
+        let infoSubjects = [],
+          basicSubjects = [],
+          currentTab = "info";
+
+        const $search = document.getElementById("search");
+        $search.addEventListener("input", () => {
+          // sube la ventana principal
+          try {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          } catch (e) {
+            window.scrollTo(0, 0);
+          }
+
+          // ahora intentamos subir el contenedor de materias (o su ancestro scrollable)
+          const lista = document.getElementById("lista-materias");
+          if (!lista) return;
+
+          // si el propio contenedor es scrollable, lo subimos
+          const tryScrollElementToTop = (el) => {
+            if (!el) return false;
+            try {
+              if (typeof el.scrollTo === "function") {
+                el.scrollTo({ top: 0, behavior: "smooth" });
+              } else {
+                el.scrollTop = 0;
+              }
+              return true;
+            } catch (err) {
+              try {
+                el.scrollTop = 0;
+                return true;
+              } catch (e) {
+                return false;
+              }
+            }
+          };
+
+          // si lista tiene overflow (es scrollable), subirla
+          if (lista.scrollHeight > lista.clientHeight) {
+            if (tryScrollElementToTop(lista)) return;
+          }
+
+          // si no, buscamos el ancestro con overflow auto/scroll y lo subimos
+          let parent = lista.parentElement;
+          while (parent && parent !== document.body) {
+            const style = getComputedStyle(parent);
+            const overflowY = style.overflowY;
+            if (overflowY === "auto" || overflowY === "scroll") {
+              tryScrollElementToTop(parent);
+              break;
+            }
+            parent = parent.parentElement;
+          }
+
+          // si no se encontró ancestro scrollable, como último recurso no hacemos nada más
+        });
+        const $listaMaterias = document.getElementById("lista-materias");
+        const $comisionesResult = document.getElementById("comisionesResult");
+        const $nombreMateria = document.getElementById("materia-seleccionada");
+
+        const valueOr = (v, fallback = "No disponible") => {
+          if (v === null || v === undefined || String(v).trim() === "")
+            return fallback;
+          return v;
+        };
+
+        window.switchTab = (tab) => {
+          currentTab = tab;
+          document.getElementById("btn-info").className =
+            tab === "info" ? "btn btn-primary" : "btn";
+          document.getElementById("btn-basic").className =
+            tab === "basic" ? "btn btn-primary" : "btn";
+          renderSubjects();
+        };
+
+        async function loadSubjects() {
+          $listaMaterias.innerHTML =
+            '<p style="padding:20px">Cargando materias...</p>';
+          try {
+            const [r1, r2] = await Promise.all([
+              fetch(SUBJECTS_URL_INFO),
+              fetch(SUBJECTS_URL_BASIC),
+            ]);
+            const d1 = await r1.json();
+            const d2 = await r2.json();
+            infoSubjects = d1.items || [];
+            basicSubjects = d2.items || [];
+            renderSubjects();
+          } catch (e) {
+            console.error(e);
+            $listaMaterias.innerHTML =
+              '<p style="padding:20px; color:red">Error al cargar datos.</p>';
+          }
+        }
+
+        function renderSubjects() {
+          const q = normalizeTextForCheck($search.value || "");
+          const list = currentTab === "info" ? infoSubjects : basicSubjects;
+          const filtered = list.filter((s) => {
+            const name = normalizeTextForCheck(s.name || "");
+            const code = normalizeTextForCheck(s.code || "");
+            return name.includes(q) || code.includes(q);
+          });
+
+          $listaMaterias.innerHTML = "";
+          if (filtered.length === 0) {
+            $listaMaterias.innerHTML =
+              '<p style="padding:10px; color:var(--text-muted)">No se encontraron materias</p>';
+            return;
+          }
+
+          filtered.forEach((s) => {
+            const item = document.createElement("div");
+            item.className = "materia-item";
+            const b = document.createElement("b");
+            b.textContent = valueOr(s.name, "Nombre no disponible");
+            const span = document.createElement("span");
+            span.textContent = `Código: ${valueOr(s.code, "—")} • Año: ${s.year ? s.year : "—"}`;
+            item.appendChild(b);
+            item.appendChild(span);
+
+            item.onclick = async () => {
+              // actualizamos el nombre visible enseguida
+              $nombreMateria.innerText = valueOr(s.name, "Seleccionada");
+
+              // llamamos a loadComisiones y esperamos que termine
+              await loadComisiones(
+                s.subjectId,
+                s.carrer?.id || (currentTab === "info" ? 10 : 112),
+                s.institute?.id || 7,
+              );
+
+              // pequeño delay para asegurar reflow en móviles, luego hacemos scroll
+              setTimeout(() => {
+                scrollSmart("comisionesResult");
+              }, 80);
+            };
+            $listaMaterias.appendChild(item);
+          });
+        }
+
+        async function loadComisiones(sId, cId, iId) {
+          $comisionesResult.innerHTML = "<p>Buscando datos detallados...</p>";
+          try {
+            const res = await fetch(
+              `${COMISIONES_URL}?academicPeriodId=6&instituteId=${iId}&subjectId=${sId}&careerId=${cId}`,
+            );
+            const data = await res.json();
+            renderComisiones(data);
+          } catch (e) {
+            console.error(e);
+            $comisionesResult.innerHTML =
+              '<p style="color:red">Error al cargar comisiones.</p>';
+          }
+        }
+
+        function calcularEdad(fechaNacimiento) {
+          if (!fechaNacimiento) return "No disponible";
+          const cumple = new Date(fechaNacimiento);
+          if (isNaN(cumple.getTime())) return "No disponible";
+          const hoy = new Date();
+          let edad = hoy.getFullYear() - cumple.getFullYear();
+          const m = hoy.getMonth() - cumple.getMonth();
+          if (m < 0 || (m === 0 && hoy.getDate() < cumple.getDate())) {
+            edad--;
+          }
+          return edad >= 0 ? `${edad} años` : "No disponible";
+        }
+
+        function emailValido(email) {
+          if (!email) return "No disponible";
+          email = email.trim();
+          const autoMail = /^[dD]?\d+@unaj\.edu\.ar$/;
+          if (autoMail.test(email)) {
+            return "No disponible";
+          }
+          return email;
+        }
+
+        function pickCommissionName(com) {
+          return (
+            com.commissionName ||
+            com.comisionName ||
+            com.name ||
+            com.comisionId ||
+            "No disponible"
+          );
+        }
+
+        // crea una key única por comisión (intenta usar id real, fallback subject+nombre)
+        function makeCommissionKey(com) {
+          const cid =
+            com.comisionId ||
+            com.commissionId ||
+            com.id ||
+            com.comision ||
+            null;
+          if (cid) return String(cid).trim();
+          const name = String(pickCommissionName(com)).replace(/\s+/g, "_");
+          return `${com.subjectId || "s"}_${name}`;
+        }
+
+        function getPlannerEventKeysFromDOM() {
+          const root = document.getElementById("planner-body");
+          if (!root) return [];
+          return Array.from(root.querySelectorAll(".planner-event"))
+            .map((ev) => ev.dataset.key)
+            .filter(Boolean);
+        }
+
+        function plannerHasAnyWithPrefix(prefix) {
+          if (!prefix) return false;
+          return getPlannerEventKeysFromDOM().some(
+            (k) => !!k && k.startsWith(prefix),
+          );
+        }
+
+        function updateButtonsForKey(key) {
+          if (!key) return;
+          const exists = plannerHasAnyWithPrefix(key);
+          document
+            .querySelectorAll(`#comisionesResult button[data-key]`)
+            .forEach((btn) => {
+              if (btn.dataset.key !== key) return;
+              if (exists) {
+                btn.textContent = "Eliminar del planificador";
+                btn.classList.add("btn-danger");
+              } else {
+                btn.textContent = "Agregar al planificador";
+                btn.classList.remove("btn-danger");
+              }
+            });
+        }
+
+        function normalizeTextForCheck(s) {
+          if (!s) return "";
+          return String(s)
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase();
+        }
+
+        function isVirtualAsincronicaDay(d) {
+          if (!d) return false;
+          const candidates = [
+            d.dictadoType,
+            d.type,
+            d.mode,
+            d.observations,
+            d.description,
+            d.turnDescription,
+            d.daysOfWeekName,
+          ];
+          for (const c of candidates) {
+            if (!c) continue;
+            const n = normalizeTextForCheck(c);
+            if (
+              n.includes("virtual") &&
+              (n.includes("asin") ||
+                n.includes("asincron") ||
+                n.includes("asincrona") ||
+                n.includes("asincrónica"))
+            ) {
+              return true;
+            }
+          }
+          return false;
+        }
+
+        // sanitize para generar una parte segura de key basada en texto (ej. horario)
+        function sanitizeForKey(s) {
+          if (!s) return "t";
+          return String(s)
+            .toLowerCase()
+            .replace(/\s+/g, "_")
+            .replace(/[^a-z0-9_]/g, "")
+            .substring(0, 80); // evitar keys enormes
+        }
+        // función para hacer scroll hacia #comisionesResult compensando la altura del header
+        // helper: detecta si estamos en "desktop" (puntero fino + ancho mínimo)
+        function isDesktopDevice() {
+          try {
+            return (
+              window.matchMedia &&
+              window.matchMedia("(pointer: fine) and (min-width: 900px)")
+                .matches
+            );
+          } catch (e) {
+            return window.innerWidth >= 900;
+          }
+        }
+
+        // si no existe getScrollParent, definimos una versión segura (no rompe si ya la tenías)
+        if (typeof getScrollParent !== "function") {
+          function getScrollParent(node) {
+            if (!node)
+              return document.scrollingElement || document.documentElement;
+            let parent = node.parentElement;
+            while (parent && parent !== document.body) {
+              const style = getComputedStyle(parent);
+              const oy = style.overflowY || style.overflow || "";
+              if (oy && /(auto|scroll|overlay)/.test(oy)) return parent;
+              parent = parent.parentElement;
+            }
+            return document.scrollingElement || document.documentElement;
+          }
+        }
+
+        /**
+         * scrollSmart(targetOrId)
+         * - Si detecta Desktop => scrollea el primer ancestro scrollable del target (sidebar).
+         * - Si NO es Desktop => intenta delegar a las funciones móviles existentes (no modificar su lógica).
+         */
+        function scrollSmart(targetOrId) {
+          const target =
+            typeof targetOrId === "string"
+              ? document.getElementById(targetOrId)
+              : targetOrId;
+          if (!target) return;
+
+          const header = document.querySelector(".sidebar-header");
+          const headerHeight = header
+            ? header.getBoundingClientRect().height
+            : 0;
+
+          if (!isDesktopDevice()) {
+            // delegado a comportamiento móvil existente (si existe)
+            try {
+              // si el target es comisionesResult o plannerPanel llamamos a las funciones originales
+              if (
+                target.id === "comisionesResult" &&
+                typeof scrollToComisiones === "function"
+              ) {
+                scrollToComisiones();
+                return;
+              }
+              if (
+                (target.id === "plannerPanel" || target.id === "planner") &&
+                typeof scrollToPlanner === "function"
+              ) {
+                scrollToPlanner();
+                return;
+              }
+            } catch (e) {
+              // si falla la delegación, caemos al fallback (window scroll)
+            }
+
+            // fallback móvil: calculo simple del rect y window.scrollTo
+            const rect = target.getBoundingClientRect();
+            const topAbsolute = window.scrollY + rect.top;
+            const scrollTo = Math.max(0, topAbsolute - headerHeight - 12);
+            try {
+              window.scrollTo({ top: scrollTo, behavior: "smooth" });
+            } catch (e) {
+              window.scrollTo(0, scrollTo);
+            }
+            return;
+          }
+
+          // === Desktop behaviour: scroll dentro del contenedor scrollable (sidebar) ===
+          const scrollParent = getScrollParent(target);
+          if (
+            !scrollParent ||
+            scrollParent === document.scrollingElement ||
+            scrollParent === document.documentElement
+          ) {
+            // si no hay contenedor, usamos window (por si acaso)
+            const rect = target.getBoundingClientRect();
+            const topAbsolute = window.scrollY + rect.top;
+            const scrollTo = Math.max(0, topAbsolute - headerHeight - 12);
+            try {
+              window.scrollTo({ top: scrollTo, behavior: "smooth" });
+            } catch (e) {
+              window.scrollTo(0, scrollTo);
+            }
+            return;
+          }
+
+          // calculamos offset relativo al scrollParent
+          let offset = 0;
+          let el = target;
+          while (el && el !== scrollParent) {
+            offset += el.offsetTop || 0;
+            el = el.offsetParent;
+          }
+          const targetScrollTop = Math.max(0, offset - headerHeight - 12);
+
+          // scrollear el contenedor (compatibilidad con navegadores antiguos)
+          try {
+            scrollParent.scrollTo({ top: targetScrollTop, behavior: "smooth" });
+          } catch (e) {
+            scrollParent.scrollTop = targetScrollTop;
+          }
+        }
+        function scrollToComisiones() {
+          const target = document.getElementById("comisionesResult");
+          if (!target) return;
+
+          const header = document.querySelector(".sidebar-header");
+          const headerHeight = header
+            ? header.getBoundingClientRect().height
+            : 0;
+
+          const rect = target.getBoundingClientRect();
+          const topAbsolute = window.scrollY + rect.top;
+
+          // restamos headerHeight + un pequeño margen (12px)
+          const scrollTo = Math.max(0, topAbsolute - headerHeight - 12);
+
+          window.scrollTo({ top: scrollTo, behavior: "smooth" });
+        }
+
+        // abre el panel del planificador y actualiza el texto del toggle button
+        function openPlannerPanel() {
+          const panel = document.getElementById("plannerPanel");
+          const toggleBtn = document.getElementById("toggleCalendarView");
+          if (!panel) return;
+          if (panel.style.display === "none" || panel.style.display === "") {
+            panel.style.display = "block";
+            if (toggleBtn) {
+              toggleBtn.innerHTML =
+                '<i class="fas fa-calendar-times"></i> Ocultar planificador';
+            }
+          } else {
+            // si ya está abierto, no hacemos nada (pero mantenemos el texto consistente)
+            if (toggleBtn && toggleBtn.innerHTML.indexOf("Mostrar") !== -1) {
+              toggleBtn.innerHTML =
+                '<i class="fas fa-calendar-times"></i> Ocultar planificador';
+            }
+          }
+        }
+
+        // hace scroll suave hacia el panel/planner (compensa header)
+        function scrollToPlanner() {
+          const plannerPanel =
+            document.getElementById("plannerPanel") ||
+            document.getElementById("planner");
+          if (!plannerPanel) return;
+          const header = document.querySelector(".sidebar-header");
+          const headerHeight = header
+            ? header.getBoundingClientRect().height
+            : 0;
+          const rect = plannerPanel.getBoundingClientRect();
+          const topAbsolute = window.scrollY + rect.top;
+          const scrollTo = Math.max(0, topAbsolute - headerHeight - 12);
+          window.scrollTo({ top: scrollTo, behavior: "smooth" });
+        }
+        function renderComisiones(data) {
+          const items = Array.isArray(data) ? data : data.items || [];
+
+          if (items.length === 0) {
+            $comisionesResult.innerHTML =
+              '<div class="no-selection"><p>No hay comisiones disponibles.</p></div>';
+            return;
+          }
+
+          $comisionesResult.innerHTML = "";
+
+          function normalizeTeacher(t) {
+            if (!t)
+              return {
+                name: "",
+                email: "",
+                instEmail: "",
+                birth: "",
+                roleName: "",
+              };
+            if (typeof t === "string") {
+              return {
+                name: t,
+                email: "",
+                instEmail: "",
+                birth: "",
+                roleName: "",
+              };
+            }
+
+            const name = (
+              t.teacherFullName ||
+              t.fullName ||
+              t.name ||
+              ""
+            ).trim();
+            const email = (t.teacherEmail || t.email || "").trim();
+            const instEmail = (
+              t.institutionalEmail ||
+              t.teacherInstitutionalEmail ||
+              t.institutionalMail ||
+              ""
+            ).trim();
+            const birth =
+              t.teacherBirthDate ||
+              t.birthDate ||
+              t.fechaNacimiento ||
+              t.birth ||
+              "";
+            const roleName = (
+              t.teacherRoleName ||
+              t.teacherRoleDescription ||
+              t.role ||
+              t.roleName ||
+              ""
+            ).trim();
+
+            return { name, email, instEmail, birth, roleName, raw: t };
+          }
+
+          // buscar coordinador
+          let coordinador = null;
+          let coordinadorAgregadoComoProfe = false;
+
+          items.forEach((com) => {
+            const teachers = com.teachers || [];
+            for (let t of teachers) {
+              const nt = normalizeTeacher(t);
+              if (nt.roleName === "Coordinación de materia" && !coordinador) {
+                coordinador = nt;
+                break;
+              }
+            }
+          });
+
+          if (coordinador) {
+            const card = document.createElement("div");
+            card.className = "coordinador-card";
+
+            const titulo = document.createElement("h3");
+            titulo.textContent = "Coordinador de la Materia";
+            card.appendChild(titulo);
+
+            const nombre = coordinador.name || "Nombre no disponible";
+            const email = coordinador.email || "";
+            const instEmail = coordinador.instEmail || "";
+            const edad = calcularEdad(coordinador.birth || "");
+
+            const row = document.createElement("div");
+            row.className = "profe-row";
+
+            const icon = document.createElement("div");
+            icon.className = "profe-icon";
+            icon.textContent =
+              nombre && nombre.charAt(0) ? nombre.charAt(0).toUpperCase() : "P";
+
+            const dataDiv = document.createElement("div");
+            dataDiv.className = "profe-data";
+
+            dataDiv.innerHTML = `
+    <b>${nombre}</b>
+    <span class="tag" style="background: var(--secondary); color: white; margin-left: 8px;">
+        Coordinador
+    </span>
+    <div><span class="info-label"><i class="fas fa-envelope"></i> Email:</span> ${emailValido(email)}</div>
+    <div><span class="info-label"><i class="fas fa-university"></i> Institucional:</span> ${emailValido(instEmail)}</div>
+    <div><span class="info-label"><i class="fas fa-id-card"></i> Edad:</span> ${edad}</div>
+`;
+            row.appendChild(icon);
+            row.appendChild(dataDiv);
+            card.appendChild(row);
+
+            $comisionesResult.appendChild(card);
+          }
+
+          // comisiones
+          items.forEach((com) => {
+            const card = document.createElement("div");
+            card.className = "comision-card";
+
+            const header = document.createElement("div");
+            header.className = "comision-header";
+            const h3 = document.createElement("h3");
+            h3.textContent = `${pickCommissionName(com)}`;
+            header.appendChild(h3);
+            card.appendChild(header);
+
+            // horarios agrupados (se mantienen en la visualización de la tarjeta)
+            if (com.days && com.days.length > 0) {
+              const horariosDiv = document.createElement("div");
+              horariosDiv.style.marginBottom = "10px";
+
+              const titulo = document.createElement("div");
+              titulo.style.fontWeight = "bold";
+              titulo.style.marginBottom = "5px";
+              titulo.textContent = "Horarios / Señales:";
+              horariosDiv.appendChild(titulo);
+
+              const listaHorarios = document.createElement("div");
+              listaHorarios.style.fontSize = "0.9rem";
+
+              const observacionesSet = new Set();
+
+              com.days.forEach((d) => {
+                let aula = "";
+                if (d.building) {
+                  aula = ` • ${d.building} ${d.placeName || ""}`;
+                }
+
+                const linea = document.createElement("div");
+                const dayLabel = d.daysOfWeekName || d.dayName || "";
+                const horarioLabel = isVirtualAsincronicaDay(d)
+                  ? ""
+                  : `${d.startHour || ""}${d.startHour && d.endHour ? " - " : ""}${d.endHour || ""}`;
+
+                linea.textContent =
+                  `${dayLabel} ${horarioLabel} ` +
+                  `(${d.dictadoType || d.dictado || ""})${aula}`;
+
+                listaHorarios.appendChild(linea);
+
+                if (d.observations && d.observations.trim() !== "") {
+                  observacionesSet.add(d.observations.trim());
+                }
+              });
+
+              horariosDiv.appendChild(listaHorarios);
+              card.appendChild(horariosDiv);
+
+              if (observacionesSet.size > 0) {
+                const obsDiv = document.createElement("div");
+                obsDiv.style.fontSize = "0.85rem";
+                obsDiv.style.color = "var(--text-muted)";
+                obsDiv.style.marginTop = "8px";
+
+                const obsTitulo = document.createElement("div");
+                obsTitulo.style.fontWeight = "bold";
+                obsTitulo.textContent = "Observaciones:";
+                obsDiv.appendChild(obsTitulo);
+
+                observacionesSet.forEach((obs) => {
+                  const lineaObs = document.createElement("div");
+                  lineaObs.textContent = obs;
+                  obsDiv.appendChild(lineaObs);
+                });
+
+                card.appendChild(obsDiv);
+              }
+            }
+
+            // profesores (se mantiene igual)
+            const teachers = com.teachers || [];
+            const normalizedTeachers = teachers.map(normalizeTeacher);
+
+            let profes = [];
+            const drc = normalizedTeachers.find((nt) => nt.roleName === "DRC");
+            if (drc) {
+              profes = [drc];
+            }
+
+            let esProvisorio = false;
+            if (profes.length === 0) {
+              profes = normalizedTeachers.filter(
+                (nt) => nt.roleName === "JTP" || nt.roleName === "-",
+              );
+              if (profes.length > 0) {
+                esProvisorio = true;
+                const aviso = document.createElement("div");
+                aviso.style.color = "orange";
+                aviso.style.fontSize = "0.85rem";
+                aviso.textContent =
+                  "Sin profesor asignado - Puede ser algunos de estos:";
+                card.appendChild(aviso);
+              }
+            }
+
+            if (profes.length === 0) {
+              const jtp = normalizedTeachers.find(
+                (nt) => nt.roleName === "JTP",
+              );
+              if (jtp) {
+                profes = [jtp];
+                const aviso = document.createElement("div");
+                aviso.style.color = "orange";
+                aviso.style.fontSize = "0.8rem";
+                aviso.textContent =
+                  "Sin profesor asignado — Puede ser alguno de estos:";
+                card.appendChild(aviso);
+              }
+            }
+
+            if (profes.length === 0) {
+              const sin = document.createElement("div");
+              sin.textContent = "Sin profesor asignado";
+              card.appendChild(sin);
+            }
+
+            profes.forEach((nt) => {
+              if (
+                coordinador &&
+                nt.name === coordinador.name &&
+                coordinadorAgregadoComoProfe
+              ) {
+                return;
+              }
+              if (coordinador && nt.name === coordinador.name) {
+                coordinadorAgregadoComoProfe = true;
+              }
+
+              const row = document.createElement("div");
+              row.className = "profe-row";
+
+              const icon = document.createElement("div");
+              icon.className = "profe-icon";
+              icon.textContent =
+                nt.name && nt.name.charAt(0)
+                  ? nt.name.charAt(0).toUpperCase()
+                  : "P";
+
+              const dataDiv = document.createElement("div");
+              dataDiv.className = "profe-data";
+
+              const edad = calcularEdad(nt.birth || "");
+
+              dataDiv.innerHTML = `
+      <b>${nt.name || "Nombre no disponible"}</b>
+      <div><span class="info-label"><i class="fas fa-envelope"></i> Email:</span> ${emailValido(nt.email)}</div>
+      <div><span class="info-label"><i class="fas fa-university"></i> Institucional:</span> ${emailValido(nt.instEmail)}</div>
+      <div><span class="info-label"><i class="fas fa-id-card"></i> Edad:</span> ${edad}</div>
+    `;
+              row.appendChild(icon);
+              row.appendChild(dataDiv);
+
+              card.appendChild(row);
+            });
+
+            // botón agregar al planificador (toggle)
+            const planBtn = document.createElement("button");
+            planBtn.className = "btn";
+            planBtn.style.marginTop = "10px";
+
+            const keyBase = makeCommissionKey(com);
+            planBtn.dataset.key = keyBase;
+
+            function setInitialPlanBtnState() {
+              const exists = plannerHasAnyWithPrefix(keyBase);
+              if (exists) {
+                planBtn.textContent = "Eliminar del planificador";
+                planBtn.classList.add("btn-danger");
+              } else {
+                planBtn.textContent = "Agregar al planificador";
+                planBtn.classList.remove("btn-danger");
+              }
+            }
+
+            setInitialPlanBtnState();
+
+            planBtn.addEventListener("click", async () => {
+              const title = pickCommissionName(com) || "Sin nombre";
+              const baseKey = keyBase;
+
+              // Si ya existe alguna entrada para esta comisión -> eliminar todas las entradas relacionadas
+              const existingKeys = getPlannerEventKeysFromDOM().filter(
+                (k) => k && k.startsWith(baseKey),
+              );
+              if (existingKeys.length > 0) {
+                const ok = await showConfirm(
+                  `Eliminar todas las entradas de "${title}" del planificador?`,
+                  {
+                    title: "Eliminar entradas",
+                    okText: "Eliminar",
+                    cancelText: "Cancelar",
+                  },
+                );
+                if (!ok) return;
+                existingKeys.forEach((k) => {
+                  if (typeof window.removeEventFromPlanner === "function") {
+                    window.removeEventFromPlanner(k);
+                  } else {
+                    document
+                      .querySelectorAll(
+                        `.planner-event[data-key="${CSS.escape(k)}"]`,
+                      )
+                      .forEach((el) => el.remove());
+                  }
+                });
+                setInitialPlanBtnState();
+                return;
+              }
+
+              // Construir lista de días válidos a añadir (uno por cada day en com.days)
+              const dayChecks = [
+                ["lun", 0],
+                ["mar", 1],
+                ["mie", 2],
+                ["jue", 3],
+                ["vie", 4],
+                ["sab", 5],
+              ];
+
+              const daysToAdd = [];
+
+              if (Array.isArray(com.days) && com.days.length > 0) {
+                for (const d of com.days) {
+                  const rawDay = (d.daysOfWeekName || d.dayName || "")
+                    .toString()
+                    .trim();
+                  const normDay = normalizeTextForCheck(rawDay);
+                  let foundIdx = null;
+                  for (const [tok, idx] of dayChecks) {
+                    if (normDay.includes(tok)) {
+                      foundIdx = idx;
+                      break;
+                    }
+                  }
+                  if (foundIdx !== null) {
+                    // --- omitimos días virtual asincrónica ---
+                    const isVirtualAsin = isVirtualAsincronicaDay(d);
+                    if (isVirtualAsin) continue;
+
+                    const aula = d.building
+                      ? `${d.building} ${d.placeName || ""}`
+                      : "";
+                    const infoStr =
+                      `${d.startHour || ""}${d.startHour && d.endHour ? " - " : ""}${d.endHour || ""} ${aula}`.trim();
+
+                    daysToAdd.push({
+                      dayIndex: foundIdx,
+                      info: infoStr,
+                      virtualAsin: false,
+                    });
+                  }
+                }
+              }
+
+              if (daysToAdd.length === 0) {
+                showToast(
+                  "error",
+                  "No se pudo agregar al planificador (día inválido).",
+                );
+                return;
+              }
+
+              // Agregar una entrada por cada día encontrado.
+              let addedCount = 0;
+              const addedKeys = []; // <-- guardamos keys recién creadas para highlight/scroll
+
+              daysToAdd.forEach((dd) => {
+                const infoSafe = sanitizeForKey(dd.info);
+                const perDayKey = `${baseKey}_d${dd.dayIndex}_${infoSafe}`;
+                const meta = {
+                  info: dd.info,
+                  key: perDayKey,
+                  virtualAsin: !!dd.virtualAsin,
+                };
+                if (typeof window.addEventToPlanner === "function") {
+                  window.addEventToPlanner({
+                    title: title,
+                    dayIndex: dd.dayIndex,
+                    meta: meta,
+                  });
+                  addedCount++;
+                  addedKeys.push(perDayKey);
+                }
+              });
+
+              setInitialPlanBtnState();
+
+              // Si agregamos al menos 1 entrada: abrir panel, scrollear y destacar lo nuevo
+              if (addedCount > 0) {
+                // Abrir el panel del planificador (si estaba cerrado)
+                openPlannerPanel();
+
+                // Esperamos un poquito para asegurar que DOM del planner tenga las entradas
+                setTimeout(() => {
+                  // scrollear hacia el planificador
+                  scrollSmart("plannerPanel");
+
+                  // destacamos las entradas añadidas (animación breve)
+                  addedKeys.forEach((k) => {
+                    try {
+                      const ev = document.querySelector(
+                        `.planner-event[data-key="${CSS.escape(k)}"]`,
+                      );
+                      if (ev) {
+                        // animación: pulso / glow
+                        ev.animate(
+                          [
+                            {
+                              boxShadow: "0 0 0 0 rgba(45,164,78,0.0)",
+                              transform: "scale(1)",
+                            },
+                            {
+                              boxShadow: "0 0 0 10px rgba(45,164,78,0.18)",
+                              transform: "scale(1.02)",
+                            },
+                            {
+                              boxShadow: "0 0 0 0 rgba(45,164,78,0.0)",
+                              transform: "scale(1)",
+                            },
+                          ],
+                          { duration: 900, easing: "ease-out" },
+                        );
+                      }
+                    } catch (err) {
+                      // si CSS.escape no está disponible en algún navegador (viejo), ignoramos el highlight
+                    }
+                  });
+                }, 120); // 120ms suele ser suficiente; aumentá a 220 si querés más margen en dispositivos lentos
+              }
+            });
+
+            card.appendChild(planBtn);
+            $comisionesResult.appendChild(card);
+          });
+
+          // actualizar botones según lo que ya esté en el planner
+          const allKeys = getPlannerEventKeysFromDOM();
+          allKeys.forEach((k) => updateButtonsForKey(k));
+        }
+
+        /* === Planificador semanal: columnas Lunes..Sábado === */
+        function initWeeklyPlanner() {
+          const plannerBody = document.getElementById("planner-body");
+          if (!plannerBody) return;
+
+          plannerBody.innerHTML = "";
+
+          const days = [
+            "Lunes",
+            "Martes",
+            "Miércoles",
+            "Jueves",
+            "Viernes",
+            "Sábado",
+          ];
+
+          // Header
+          const headerRow = document.createElement("div");
+          headerRow.className = "planner-header";
+          headerRow.style.display = "grid";
+          headerRow.style.gridTemplateColumns = "repeat(6, 1fr)";
+          headerRow.style.gap = "6px";
+          headerRow.style.marginBottom = "8px";
+
+          days.forEach((d, idx) => {
+            const col = document.createElement("div");
+            col.className = "planner-day-header";
+            col.style.padding = "8px";
+            col.style.fontWeight = "bold";
+            col.style.textAlign = "center";
+            col.style.border = "1px solid rgba(0,0,0,0.06)";
+            col.textContent = d;
+            headerRow.appendChild(col);
+          });
+          plannerBody.appendChild(headerRow);
+
+          // Grid row (contenedores de eventos)
+          const gridRow = document.createElement("div");
+          gridRow.className = "planner-grid-row";
+          gridRow.style.display = "grid";
+          gridRow.style.gridTemplateColumns = "repeat(6, 1fr)";
+          gridRow.style.gap = "6px";
+
+          for (let i = 0; i < 6; i++) {
+            const col = document.createElement("div");
+            col.className = "planner-day-col";
+            col.dataset.day = i;
+            col.style.minHeight = "120px";
+            col.style.padding = "8px";
+            col.style.border = "1px solid rgba(0,0,0,0.06)";
+            col.style.borderRadius = "6px";
+            col.style.background = "#161B22";
+            const innerTitle = document.createElement("div");
+            innerTitle.style.fontSize = "0.9rem";
+            innerTitle.style.color = "var(--text-muted)";
+            innerTitle.style.marginBottom = "6px";
+            innerTitle.textContent = "";
+            col.appendChild(innerTitle);
+
+            const list = document.createElement("div");
+            list.className = "planner-day-events";
+            list.style.display = "flex";
+            list.style.flexDirection = "column";
+            list.style.gap = "6px";
+            col.appendChild(list);
+
+            gridRow.appendChild(col);
+          }
+
+          plannerBody.appendChild(gridRow);
+
+          const STORAGE_KEY = "weeklyPlanner_v1_nocolumnas";
+
+          function savePlannerState() {
+            const events = [];
+            document.querySelectorAll(".planner-day-col").forEach((col) => {
+              const day = Number(col.dataset.day);
+              col.querySelectorAll(".planner-event").forEach((ev) => {
+                const meta = ev.dataset.meta ? JSON.parse(ev.dataset.meta) : {};
+                events.push({
+                  day,
+                  title: ev.dataset.title,
+                  meta: meta,
+                  key: ev.dataset.key || (meta && meta.key ? meta.key : null),
+                });
+              });
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+            const keys = getPlannerEventKeysFromDOM();
+            keys.forEach((k) => updateButtonsForKey(k));
+          }
+
+          function loadPlannerState() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            let events = [];
+            try {
+              events = JSON.parse(raw);
+            } catch (e) {
+              events = [];
+            }
+
+            // --- FIX: filtrar eventos que estén marcados como virtual asincrónica para que no se carguen ---
+            try {
+              const filtered = events.filter(
+                (ev) => !(ev.meta && ev.meta.virtualAsin),
+              );
+              if (filtered.length !== events.length) {
+                try {
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+                } catch (e) {}
+              }
+              events = filtered;
+            } catch (e) {
+              // si algo falla, seguimos con el array original
+            }
+
+            events.forEach((ev) => {
+              const col = document.querySelector(
+                `.planner-day-col[data-day="${ev.day}"]`,
+              );
+              if (col) {
+                const list = col.querySelector(".planner-day-events");
+                const div = document.createElement("div");
+                div.className = "planner-event";
+                if (ev.key) div.dataset.key = ev.key;
+                div.dataset.title = ev.title;
+                div.dataset.meta = ev.meta ? JSON.stringify(ev.meta) : null;
+                div.style.padding = "6px";
+                div.style.border = "1px solid rgba(0,0,0,0.08)";
+                div.style.borderRadius = "6px";
+                div.style.background = "var(--bg-event, #f6f8fa)";
+                div.style.cursor = "pointer";
+                const infoText = ev.meta && ev.meta.info ? ev.meta.info : "";
+                const label = ev.meta && ev.meta.virtualAsin ? "" : "";
+                div.innerHTML = `<b>${ev.title}</b>${label}${infoText ? `<div class="ventana-calendar" style="font-size:0.85rem; color:var(--text-muted)">${infoText}</div>` : ""}`;
+                div.addEventListener("click", async (e) => {
+                  e.stopPropagation();
+                  const key = div.dataset.key;
+                  const ok = await showConfirm(`Eliminar "${ev.title}"?`, {
+                    title: "Eliminar evento",
+                    okText: "Eliminar",
+                    cancelText: "Cancelar",
+                  });
+                  if (!ok) return;
+                  if (key) {
+                    window.removeEventFromPlanner(key);
+                  } else {
+                    div.remove();
+                    savePlannerState();
+                  }
+                });
+                list.appendChild(div);
+              }
+            });
+            const keys = getPlannerEventKeysFromDOM();
+            keys.forEach((k) => updateButtonsForKey(k));
+          }
+
+          // función global para agregar eventos (dayIndex obligatorio)
+          window.addEventToPlanner = function ({
+            title,
+            dayIndex,
+            meta = null,
+          }) {
+            const d = Number(dayIndex);
+            const col = document.querySelector(
+              `.planner-day-col[data-day="${d}"]`,
+            );
+            if (!col) {
+              showToast(
+                "error",
+                "No se pudo ubicar el día en la grilla (día inválido).",
+              );
+              return;
+            }
+
+            const key = meta && meta.key ? String(meta.key) : null;
+
+            // evitar duplicados por key (si la key es única por horario, se permitirá agregar varios horarios el mismo día)
+            if (
+              key &&
+              document.querySelector(
+                `.planner-event[data-key="${CSS.escape(key)}"]`,
+              )
+            ) {
+              showToast("warn", "Ya existe ese evento en el planificador.");
+              return;
+            }
+
+            const list = col.querySelector(".planner-day-events");
+            const div = document.createElement("div");
+            div.className = "planner-event";
+            if (key) div.dataset.key = key;
+            div.dataset.title = title;
+            div.dataset.meta = meta ? JSON.stringify(meta) : null;
+            div.style.padding = "6px";
+            div.style.border = "1px solid rgba(0,0,0,0.08)";
+            div.style.borderRadius = "6px";
+            div.style.background = "var(--bg-event, #f6f8fa)";
+            div.style.cursor = "pointer";
+            const label =
+              meta && meta.virtualAsin ? " (virtual asincrónica)" : "";
+            const infoText = meta && meta.info ? meta.info : "";
+            div.innerHTML = `<b>${title}</b>${label}${infoText ? `<div style="font-size:0.85rem; color:var(--text-muted)">${infoText}</div>` : ""}`;
+
+            div.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              const keyLocal = div.dataset.key;
+              const ok = await showConfirm(`Eliminar "${title}"?`, {
+                title: "Eliminar evento",
+                okText: "Eliminar",
+                cancelText: "Cancelar",
+              });
+              if (!ok) return;
+              if (keyLocal) {
+                window.removeEventFromPlanner(keyLocal);
+              } else {
+                div.remove();
+                savePlannerState();
+              }
+            });
+
+            list.appendChild(div);
+            savePlannerState();
+          };
+
+          // eliminar evento(s) por key
+          window.removeEventFromPlanner = function (key) {
+            if (!key) return;
+            const baseKey = String(key).split("_d")[0];
+
+            document.querySelectorAll(".planner-event").forEach((el) => {
+              const k = el.dataset.key;
+              if (!k) return;
+              if (k === key || k.startsWith(baseKey + "_d")) {
+                el.remove();
+              }
+            });
+
+            try {
+              savePlannerState();
+            } catch (e) {
+              console.warn("savePlannerState falló al eliminar evento:", e);
+            }
+
+            updateButtonsForKey(baseKey);
+          };
+
+          const clearBtn = document.getElementById("clearCalendar");
+          if (clearBtn) {
+            clearBtn.addEventListener("click", async () => {
+              const ok = await showConfirm(
+                "Borrar todos los eventos del planificador?",
+                {
+                  title: "Borrar todos",
+                  okText: "Borrar",
+                  cancelText: "Cancelar",
+                },
+              );
+              if (!ok) return;
+              document
+                .querySelectorAll(".planner-day-col .planner-event")
+                .forEach((el) => el.remove());
+              localStorage.removeItem(STORAGE_KEY);
+              document
+                .querySelectorAll(`#comisionesResult button[data-key]`)
+                .forEach((btn) => {
+                  btn.textContent = "Agregar al planificador";
+                  btn.classList.remove("btn-danger");
+                });
+            });
+          }
+
+          const toggleBtn = document.getElementById("toggleCalendarView");
+          const plannerPanel = document.getElementById("plannerPanel");
+          if (toggleBtn && plannerPanel) {
+            if (
+              !plannerPanel.style.display ||
+              plannerPanel.style.display === "none"
+            ) {
+              toggleBtn.innerHTML =
+                '<i class="fas fa-calendar-alt"></i> Mostrar planificador';
+            } else {
+              toggleBtn.innerHTML =
+                '<i class="fas fa-calendar-times"></i> Ocultar planificador';
+            }
+
+            toggleBtn.addEventListener("click", () => {
+              if (
+                plannerPanel.style.display === "none" ||
+                plannerPanel.style.display === ""
+              ) {
+                plannerPanel.style.display = "block";
+                toggleBtn.innerHTML =
+                  '<i class="fas fa-calendar-times"></i> Ocultar planificador';
+              } else {
+                plannerPanel.style.display = "none";
+                toggleBtn.innerHTML =
+                  '<i class="fas fa-calendar-alt"></i> Mostrar planificador';
+              }
+            });
+          }
+
+          loadPlannerState();
+        }
+        // actualiza una variable CSS con la altura del header para usar en CSS si necesitás
+        function updateSidebarHeaderHeightVar() {
+          const header = document.querySelector(".sidebar-header");
+          if (header) {
+            document.documentElement.style.setProperty(
+              "--sidebar-header-height",
+              `${header.offsetHeight}px`,
+            );
+          }
+        }
+        window.addEventListener("load", updateSidebarHeaderHeightVar);
+        window.addEventListener("resize", () => {
+          clearTimeout(window.__hdrTO);
+          window.__hdrTO = setTimeout(updateSidebarHeaderHeightVar, 80);
+        });
+
+        // inicializar después DOM load
+        document.addEventListener("DOMContentLoaded", () => {
+          initWeeklyPlanner();
+          if ($search) {
+            $search.addEventListener("input", () => {
+              // re-renderizamos la lista
+              renderSubjects();
+
+              // esperamos un poco para que el DOM actualice y luego scrolleamos suavemente
+              setTimeout(() => {
+                const lista = document.getElementById("lista-materias");
+                if (!lista) return;
+
+                // Buscar el primer ancestro con overflow auto/scroll.
+                function getScrollParent(node) {
+                  if (!node) return null;
+                  let parent = node.parentElement;
+                  while (parent) {
+                    const style = getComputedStyle(parent);
+                    const overflowY = style.overflowY;
+                    if (overflowY === "auto" || overflowY === "scroll")
+                      return parent;
+                    parent = parent.parentElement;
+                  }
+                  return document.scrollingElement || document.documentElement;
+                }
+
+                const scrollParent = getScrollParent(lista);
+
+                // altura del header fijo (si existe)
+                const header = document.querySelector(".sidebar-header");
+                const headerHeight = header
+                  ? header.getBoundingClientRect().height
+                  : 0;
+
+                if (
+                  scrollParent &&
+                  scrollParent !== document.scrollingElement &&
+                  scrollParent !== document.documentElement
+                ) {
+                  // SCROLL DENTRO DEL SIDEBAR: calculamos offset relativo al scrollParent
+                  const firstItem =
+                    lista.querySelector(".materia-item") || lista;
+
+                  // calcular offsetTop relativo al scrollParent (sumando offsetTop hasta llegar al scrollParent)
+                  let offset = 0;
+                  let el = firstItem;
+                  while (el && el !== scrollParent) {
+                    offset += el.offsetTop || 0;
+                    el = el.offsetParent;
+                  }
+
+                  // compensar header height y un pequeño margen
+                  const targetScrollTop = Math.max(
+                    0,
+                    offset - headerHeight - 8,
+                  );
+
+                  // scrollear el contenedor
+                  scrollParent.scrollTo({
+                    top: targetScrollTop,
+                    behavior: "smooth",
+                  });
+                } else {
+                  // SCROLL DE LA VENTANA: compensa header (comportamiento anterior)
+                  const rect = lista.getBoundingClientRect();
+                  const topAbsolute = window.scrollY + rect.top;
+                  const scrollTo = Math.max(0, topAbsolute - headerHeight - 8);
+                  window.scrollTo({ top: scrollTo, behavior: "smooth" });
+                }
+              }, 60);
+            });
+          }
+          const refreshBtn = document.getElementById("refresh");
+          if (refreshBtn) refreshBtn.addEventListener("click", loadSubjects);
+          loadSubjects();
+        });
+      })();
+
+      // Listener para descargar PDF: reemplazado para generar PDF desde datos (sin screenshot)
+      // reemplazar el listener existente por este bloque mejorado
+      const dlBtn = document.getElementById("downloadPDF");
+      if (dlBtn) {
+        dlBtn.addEventListener("click", () => {
+          try {
+            const STORAGE_KEY = "weeklyPlanner_v1_nocolumnas";
+            const raw = localStorage.getItem(STORAGE_KEY);
+            let events = [];
+            try {
+              events = raw ? JSON.parse(raw) : [];
+            } catch (e) {
+              events = [];
+            }
+
+            // Filtrar eventos virtuales (si existieran)
+            events = events.filter((ev) => !(ev.meta && ev.meta.virtualAsin));
+
+            if (!events || events.length === 0) {
+              showToast(
+                "info",
+                "No hay eventos en el planificador para exportar.",
+              );
+              return;
+            }
+
+            // Agrupar por día (0 = Lunes ... 5 = Sábado)
+            const daysNames = [
+              "Lunes",
+              "Martes",
+              "Miércoles",
+              "Jueves",
+              "Viernes",
+              "Sábado",
+            ];
+            const eventsByDay = [[], [], [], [], [], []];
+
+            events.forEach((ev) => {
+              const day = Number(ev.day);
+              if (isNaN(day) || day < 0 || day > 5) return;
+              const info =
+                ev.meta && ev.meta.info ? String(ev.meta.info).trim() : "";
+              const title = ev.title ? String(ev.title).trim() : "";
+              const cellText = info ? `${title}\n${info}` : title;
+              eventsByDay[day].push(cellText);
+            });
+
+            const maxRows = Math.max(...eventsByDay.map((a) => a.length), 1);
+
+            // Crear PDF con jsPDF (ya incluido)
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+              orientation: "landscape",
+              unit: "pt",
+              format: "a4",
+            });
+
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 36;
+            const usableWidth = pageWidth - margin * 2;
+            const colCount = daysNames.length; // 6
+            const colWidth = usableWidth / colCount;
+            let y = margin;
+
+            // Configuraciones de dibujo (bordes y texto)
+            pdf.setDrawColor(180); // color de borde (gris claro)
+            pdf.setLineWidth(0.7);
+
+            // Título
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(16);
+            pdf.text("Cronograma de Clases", pageWidth / 2, y, {
+              align: "center",
+            });
+            y += 18;
+            pdf.setFontSize(9);
+            pdf.setFont("helvetica", "normal");
+            pdf.text(
+              `Generado: ${new Date().toLocaleString()}`,
+              pageWidth / 2,
+              y,
+              {
+                align: "center",
+              },
+            );
+            y += 16;
+
+            // Header días (fondo gris suave + borde)
+            pdf.setFontSize(11);
+            for (let c = 0; c < colCount; c++) {
+              const x = margin + c * colWidth;
+              // fondo header (gris muy suave)
+              pdf.setFillColor(240, 240, 240);
+              pdf.rect(x, y, colWidth, 22, "F");
+              // borde header
+              pdf.setDrawColor(180);
+              pdf.rect(x, y, colWidth, 22);
+              // texto centrado
+              pdf.setTextColor(0, 0, 0);
+              pdf.text(daysNames[c], x + colWidth / 2, y + 15, {
+                align: "center",
+              });
+            }
+            y += 22;
+
+            // Filas con salto de página si hace falta
+            for (let r = 0; r < maxRows; r++) {
+              // calcular altura de fila en base al contenido (wrap)
+              const cellSplits = [];
+              let rowHeight = 18;
+              for (let c = 0; c < colCount; c++) {
+                const text = eventsByDay[c][r] || "";
+                const split = pdf.splitTextToSize(text || "", colWidth - 8);
+                const h = Math.max(12, split.length * 10 + 8);
+                cellSplits.push({ split, h });
+                if (h > rowHeight) rowHeight = h;
+              }
+
+              // salto de página si no entra
+              if (y + rowHeight + margin > pageHeight) {
+                pdf.addPage();
+                y = margin;
+              }
+
+              // dibujar celdas (fondo blanco + borde) y texto
+              for (let c = 0; c < colCount; c++) {
+                const x = margin + c * colWidth;
+                // fondo blanco para evitar manchas/solapamientos
+                pdf.setFillColor(255, 255, 255);
+                pdf.rect(x, y, colWidth, rowHeight, "F");
+                // borde ligero
+                pdf.setDrawColor(200);
+                pdf.rect(x, y, colWidth, rowHeight);
+                // texto (si hay)
+                const { split } = cellSplits[c];
+                pdf.setFontSize(10);
+                pdf.setTextColor(0, 0, 0);
+                if (split && split.length > 0) {
+                  pdf.text(split, x + 6, y + 12);
+                }
+              }
+
+              y += rowHeight;
+            }
+
+            pdf.save("mi_horario_unaj.pdf");
+          } catch (err) {
+            console.error("Error generando PDF desde datos:", err);
+            // antes: alert("Ocurrió un error al generar el PDF. Revisá la consola.");
+            showToast(
+              "error",
+              "Ocurrió un error al generar el PDF. Revisá la consola.",
+            );
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
