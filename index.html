@@ -513,6 +513,43 @@
             .replace(/[^a-z0-9_]/g, "")
             .substring(0, 80); // evitar keys enormes
         }
+        // ---------------- HELPERS HORARIOS (PEGAR JUSTO DESPUÉS DE sanitizeForKey) ----------------
+        function parseTimeToMinutes(ts) {
+          if (!ts) return null;
+          ts = String(ts).trim();
+          // acepta "HH:MM", "H:MM", "HH:MM:SS", "HHMM" y opcional AM/PM
+          let m = ts.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?/i);
+          if (!m) {
+            m = ts.match(/^(\d{2})(\d{2})$/);
+            if (!m) return null;
+          }
+          let hh = parseInt(m[1], 10);
+          const mm = parseInt(m[2], 10);
+          const ampm = m[3];
+          if (ampm) {
+            const a = ampm.toLowerCase();
+            if (a === "pm" && hh < 12) hh += 12;
+            if (a === "am" && hh === 12) hh = 0;
+          }
+          if (isNaN(hh) || isNaN(mm)) return null;
+          return hh * 60 + mm;
+        }
+
+        function timesOverlap(aStart, aEnd, bStart, bEnd) {
+          // si falta cualquiera de los valores no podemos afirmar overlap -> retornamos false (permitir)
+          if (aStart == null || aEnd == null || bStart == null || bEnd == null)
+            return false;
+          // condición clásica: comienza antes de que termine el otro y el otro comienza antes de que termine el primero
+          return aStart < bEnd && bStart < aEnd;
+        }
+
+        function formatMinutesToHHMM(mins) {
+          if (mins == null || isNaN(mins)) return "";
+          const hh = Math.floor(mins / 60);
+          const mm = mins % 60;
+          return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+        }
+        // -----------------------------------------------------------------------------------------
         // función para hacer scroll hacia #comisionesResult compensando la altura del header
         // helper: detecta si estamos en "desktop" (puntero fino + ancho mínimo)
         function isDesktopDevice() {
@@ -788,8 +825,8 @@
     </span>
     <div><span class="info-label"><i class="fas fa-envelope"></i> Email:</span> ${emailValido(email)}</div>
     <div><span class="info-label"><i class="fas fa-university"></i> Institucional:</span> ${emailValido(instEmail)}</div>
-    <div><span class="info-label"><i class="fas fa-id-card"></i> Edad:</span> ${edad}</div>
-`;
+    `;
+            /*<div><span class="info-label"><i class="fas fa-id-card"></i> Edad:</span> ${edad}</div>*/
             row.appendChild(icon);
             row.appendChild(dataDiv);
             card.appendChild(row);
@@ -918,7 +955,14 @@
               sin.textContent = "Sin profesor asignado";
               card.appendChild(sin);
             }
-
+            // --- INICIO: contenedor que agrupará los botones "Comentarios" ---
+            const actionsWrap = document.createElement("div");
+            actionsWrap.className = "comision-actions";
+            actionsWrap.style.display = "flex";
+            actionsWrap.style.gap = "8px";
+            actionsWrap.style.alignItems = "center";
+            actionsWrap.style.flexWrap = "wrap";
+            // --- FIN: contenedor ---
             profes.forEach((nt) => {
               if (
                 coordinador &&
@@ -950,11 +994,65 @@
       <b>${nt.name || "Nombre no disponible"}</b>
       <div><span class="info-label"><i class="fas fa-envelope"></i> Email:</span> ${emailValido(nt.email)}</div>
       <div><span class="info-label"><i class="fas fa-university"></i> Institucional:</span> ${emailValido(nt.instEmail)}</div>
-      <div><span class="info-label"><i class="fas fa-id-card"></i> Edad:</span> ${edad}</div>
-    `;
+      `;
+              /* <div><span class="info-label"><i class="fas fa-id-card"></i> Edad:</span> ${edad}</div>*/
+              // append icon y dataDiv al row (original)
               row.appendChild(icon);
               row.appendChild(dataDiv);
 
+              // ----------------- AÑADIR: botón Comentarios POR PROFESOR -----------------
+              const profRaw = nt.raw || {};
+              const teacherIdRow =
+                profRaw.teacherId ||
+                profRaw.teacher_id ||
+                profRaw.id ||
+                profRaw.idTeacher ||
+                "";
+
+              // crear botón y wrapper
+              const commentBtn = document.createElement("button");
+              commentBtn.className = "btn comment-btn";
+              commentBtn.style.marginLeft = "8px";
+              commentBtn.style.marginTop = "6px";
+              commentBtn.textContent = "Comentarios";
+
+              // si no hay teacherId, lo deshabilitamos (evita que varios profs compartan el mismo id)
+              if (!teacherIdRow) {
+                commentBtn.disabled = true;
+                commentBtn.title =
+                  "Comentarios no disponibles (falta teacherId)";
+              } else {
+                // al hacer click abrimos el modal con el teacherId específico
+                commentBtn.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  const profName = nt.name || "";
+                  if (typeof openCommentsModal === "function") {
+                    openCommentsModal(String(teacherIdRow), profName);
+                  } else {
+                    alert("Función de comentarios no disponible.");
+                  }
+                });
+
+                // mostrar contador en vivo (si querés evitar listeners acumulados, lo discutimos)
+                try {
+                  updateCommentCountBadge(String(teacherIdRow), commentBtn);
+                } catch (err) {
+                  /* ignore */
+                }
+              }
+
+              // envolvemos el botón para que quede alineado con la fila del profe
+              const btnWrap = document.createElement("div");
+              btnWrap.style.display = "flex";
+              btnWrap.style.alignItems = "center";
+              btnWrap.style.marginLeft = "12px";
+              btnWrap.appendChild(commentBtn);
+
+              // añadimos el wrapper al row
+              actionsWrap.appendChild(btnWrap);
+              // ----------------- FIN botón por profesor -----------------
+
+              // finalmente, añadimos la fila a la tarjeta
               card.appendChild(row);
             });
 
@@ -1048,10 +1146,20 @@
                     const infoStr =
                       `${d.startHour || ""}${d.startHour && d.endHour ? " - " : ""}${d.endHour || ""} ${aula}`.trim();
 
+                    // parseamos a minutos (null si no se pudo)
+                    const startMin = parseTimeToMinutes(d.startHour || "");
+                    const endMin = parseTimeToMinutes(d.endHour || "");
+
+                    // consideramos válido sólo si ambos existen y end > start
+                    const validRange =
+                      startMin != null && endMin != null && endMin > startMin;
+
                     daysToAdd.push({
                       dayIndex: foundIdx,
                       info: infoStr,
                       virtualAsin: false,
+                      startMin: validRange ? startMin : null,
+                      endMin: validRange ? endMin : null,
                     });
                   }
                 }
@@ -1076,6 +1184,8 @@
                   info: dd.info,
                   key: perDayKey,
                   virtualAsin: !!dd.virtualAsin,
+                  startMin: dd.startMin != null ? Number(dd.startMin) : null,
+                  endMin: dd.endMin != null ? Number(dd.endMin) : null,
                 };
                 if (typeof window.addEventToPlanner === "function") {
                   window.addEventToPlanner({
@@ -1133,8 +1243,31 @@
                 }, 120); // 120ms suele ser suficiente; aumentá a 220 si querés más margen en dispositivos lentos
               }
             });
+            // --- INICIO: contenedor final que pone acciones y planBtn juntos ---
+            const actionsContainer = document.createElement("div");
+            actionsContainer.className = "comision-actions-container";
+            actionsContainer.style.display = "flex";
+            actionsContainer.style.gap = "12px";
+            actionsContainer.style.alignItems = "center";
+            actionsContainer.style.justifyContent = "flex-start";
+            actionsContainer.style.marginTop = "10px";
 
-            card.appendChild(planBtn);
+            // si hay botones de comentarios, los adjuntamos
+
+            // ahora agregamos el planBtn (ya creado abajo) al mismo contenedor
+            actionsContainer.appendChild(planBtn);
+
+            if (
+              actionsWrap &&
+              actionsWrap.children &&
+              actionsWrap.children.length > 0
+            ) {
+              actionsContainer.appendChild(actionsWrap);
+            }
+            // y finalmente agregamos el contenedor a la tarjeta (en lugar de appendar planBtn directamente)
+            card.appendChild(actionsContainer);
+            // --- FIN: contenedor final ---
+
             $comisionesResult.appendChild(card);
           });
 
@@ -1260,12 +1393,36 @@
               // si algo falla, seguimos con el array original
             }
 
+            // Agrupar por día
+            const eventsByDay = [[], [], [], [], [], []];
             events.forEach((ev) => {
+              const day = Number(ev.day);
+              if (isNaN(day) || day < 0 || day > 5) return;
+              eventsByDay[day].push(ev);
+            });
+
+            // Para cada día, ordenar por startMin (null -> al final) y luego renderizar
+            eventsByDay.forEach((dayEvents, dayIdx) => {
+              if (!dayEvents || dayEvents.length === 0) return;
+              dayEvents.sort((a, b) => {
+                const am =
+                  a.meta && a.meta.startMin != null
+                    ? Number(a.meta.startMin)
+                    : Infinity;
+                const bm =
+                  b.meta && b.meta.startMin != null
+                    ? Number(b.meta.startMin)
+                    : Infinity;
+                return am - bm;
+              });
+
               const col = document.querySelector(
-                `.planner-day-col[data-day="${ev.day}"]`,
+                `.planner-day-col[data-day="${dayIdx}"]`,
               );
-              if (col) {
-                const list = col.querySelector(".planner-day-events");
+              if (!col) return;
+              const list = col.querySelector(".planner-day-events");
+
+              dayEvents.forEach((ev) => {
                 const div = document.createElement("div");
                 div.className = "planner-event";
                 if (ev.key) div.dataset.key = ev.key;
@@ -1296,7 +1453,7 @@
                   }
                 });
                 list.appendChild(div);
-              }
+              });
             });
             const keys = getPlannerEventKeysFromDOM();
             keys.forEach((k) => updateButtonsForKey(k));
@@ -1322,7 +1479,7 @@
 
             const key = meta && meta.key ? String(meta.key) : null;
 
-            // evitar duplicados por key (si la key es única por horario, se permitirá agregar varios horarios el mismo día)
+            // evitar duplicados por key
             if (
               key &&
               document.querySelector(
@@ -1333,6 +1490,46 @@
               return;
             }
 
+            // === NUEVO: comprobación de solapamiento ===
+            // === NUEVO: comprobación de solapamiento ===
+            // si el evento es virtual asincrónica, no se verifica conflicto
+            if (!(meta && meta.virtualAsin)) {
+              if (meta && meta.startMin != null && meta.endMin != null) {
+                const existingEvents = Array.from(
+                  col.querySelectorAll(".planner-event"),
+                );
+                for (const ev of existingEvents) {
+                  try {
+                    const emeta = ev.dataset.meta
+                      ? JSON.parse(ev.dataset.meta)
+                      : null;
+
+                    // ignorar eventos virtuales asincrónicos
+                    if (!emeta || emeta.virtualAsin) continue;
+
+                    const s =
+                      emeta.startMin != null ? Number(emeta.startMin) : null;
+                    const e =
+                      emeta.endMin != null ? Number(emeta.endMin) : null;
+
+                    if (s != null && e != null) {
+                      if (timesOverlap(meta.startMin, meta.endMin, s, e)) {
+                        const existingTitle =
+                          ev.dataset.title || emeta.title || "Evento";
+
+                        showToast(
+                          "error",
+                          `Conflicto: "${title}" (${formatMinutesToHHMM(meta.startMin)} - ${formatMinutesToHHMM(meta.endMin)}) se superpone con "${existingTitle}" (${formatMinutesToHHMM(s)} - ${formatMinutesToHHMM(e)}).`,
+                        );
+                        return;
+                      }
+                    }
+                  } catch (err) {}
+                }
+              }
+            }
+
+            // --- resto igual que tenías antes ---
             const list = col.querySelector(".planner-day-events");
             const div = document.createElement("div");
             div.className = "planner-event";
@@ -1366,7 +1563,55 @@
               }
             });
 
-            list.appendChild(div);
+            // --- insertar ordenado por startMin (si existe) ---
+            (function insertOrdered() {
+              try {
+                const newStart =
+                  meta && meta.startMin != null ? Number(meta.startMin) : null;
+                if (newStart == null) {
+                  // si no tenemos hora de inicio del nuevo evento -> lo dejamos al final
+                  list.appendChild(div);
+                  return;
+                }
+
+                const children = Array.from(
+                  list.querySelectorAll(".planner-event"),
+                );
+                let inserted = false;
+                for (const child of children) {
+                  try {
+                    const cmeta = child.dataset.meta
+                      ? JSON.parse(child.dataset.meta)
+                      : null;
+                    const cStart =
+                      cmeta && cmeta.startMin != null
+                        ? Number(cmeta.startMin)
+                        : null;
+                    // si el evento actual no tiene start (null) lo consideramos "infinito" (va al final)
+                    if (cStart == null) {
+                      // insertar antes del primer que no tenga hora (así los con hora quedan ordenados arriba)
+                      list.insertBefore(div, child);
+                      inserted = true;
+                      break;
+                    }
+                    if (newStart < cStart) {
+                      list.insertBefore(div, child);
+                      inserted = true;
+                      break;
+                    }
+                  } catch (e) {
+                    // en caso de error de parseo, saltamos ese elemento
+                  }
+                }
+                if (!inserted) {
+                  list.appendChild(div);
+                }
+              } catch (err) {
+                // fallback seguro: si algo falla, append normal
+                list.appendChild(div);
+              }
+            })();
+
             savePlannerState();
           };
 
@@ -1702,5 +1947,163 @@
         });
       }
     </script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        push,
+        onValue,
+        off,
+      } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCEyPtQB9Rhlm8dWTboo8sXT4j0UBTZ8yU",
+        authDomain: "oferta-academica-comentarios.firebaseapp.com",
+        projectId: "oferta-academica-comentarios",
+        storageBucket: "oferta-academica-comentarios.firebasestorage.app",
+        messagingSenderId: "1067836552133",
+        appId: "1:1067836552133:web:5d793f9bc447bb0533d1ac",
+        measurementId: "G-MXBW023YQ5",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      // estado actual del modal
+      let _currentTeacherId = null;
+      // referencia al path de comentarios en Firebase para poder remover el listener cuando cierre el modal
+      let _currentCommentsRef = null;
+
+      // abrir modal y suscribirse a comentarios
+      // abrir modal y suscribirse a comentarios
+      window.openCommentsModal = function (teacherId, teacherName) {
+        if (!teacherId) teacherId = String(teacherName || "sin-id");
+
+        // si había una suscripción anterior, la removemos
+        if (_currentCommentsRef) {
+          try {
+            off(_currentCommentsRef);
+          } catch (e) {
+            /* ignore */
+          }
+          _currentCommentsRef = null;
+        }
+
+        _currentTeacherId = teacherId;
+        document.getElementById("commentsModalTitle").textContent =
+          `Comentarios — ${teacherName || teacherId}`;
+        document.getElementById("commentsModal").style.display = "flex";
+
+        const list = document.getElementById("commentsList");
+        list.innerHTML = "Cargando...";
+
+        // guardamos la referencia actual para poder quitar el listener al cerrar
+        _currentCommentsRef = ref(db, `comments/${teacherId}`);
+
+        // onValue actualiza en tiempo real
+        onValue(_currentCommentsRef, (snapshot) => {
+          list.innerHTML = "";
+          if (!snapshot.exists()) {
+            list.innerHTML =
+              "<div style='color:var(--text-muted,#9aa4ad)'>Sin comentarios aún.</div>";
+            return;
+          }
+          snapshot.forEach((child) => {
+            const v = child.val();
+            const d = document.createElement("div");
+            d.className = "comment";
+            const when = v.date ? new Date(v.date).toLocaleString() : "";
+            d.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted,#9aa4ad)">${when}</div><div style="margin-top:4px">${escapeHtml(v.text)}</div>`;
+            list.appendChild(d);
+          });
+          // scrollear al final
+          list.scrollTop = list.scrollHeight;
+        });
+      };
+
+      // enviar comentario
+      window.sendComment = async function () {
+        const input = document.getElementById("commentsInput");
+        const txt = String(input.value || "").trim();
+        if (!txt) {
+          alert("Escribí un comentario");
+          return;
+        }
+        if (txt.length > 400) {
+          alert("Máximo 400 caracteres");
+          return;
+        }
+        if (!_currentTeacherId) {
+          alert("No se reconoció el profesor");
+          return;
+        }
+
+        const commentsRef = ref(db, `comments/${_currentTeacherId}`);
+        await push(commentsRef, { text: txt, date: Date.now() });
+        input.value = "";
+      };
+
+      window.closeComments = function () {
+        document.getElementById("commentsModal").style.display = "none";
+        // remover listener Firebase si estaba activo
+        if (_currentCommentsRef) {
+          try {
+            off(_currentCommentsRef);
+          } catch (e) {
+            /* ignore */
+          }
+          _currentCommentsRef = null;
+        }
+        // opcional: limpiar lista si querés
+        // document.getElementById("commentsList").innerHTML = "";
+        _currentTeacherId = null;
+      };
+
+      // listeners UI
+      document
+        .getElementById("commentsSendBtn")
+        .addEventListener("click", sendComment);
+      document
+        .getElementById("commentsCloseBtn")
+        .addEventListener("click", closeComments);
+
+      // helper para mostrar contenido seguro
+      function escapeHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      // función util para actualizar el texto del botón (por ejemplo "Comentarios (3)")
+      window.updateCommentCountBadge = async function (teacherId, btnEl) {
+        if (!teacherId || !btnEl) return;
+        try {
+          const commentsRef = ref(db, `comments/${teacherId}`);
+          onValue(commentsRef, (snapshot) => {
+            const n = snapshot.exists() ? snapshot.size : 0;
+            btnEl.textContent = `Comentarios (${n})`;
+          });
+        } catch (e) {
+          /* ignore */
+        }
+      };
+    </script>
+    <!-- Modal comentarios (pegar antes de </body>) -->
+    <div id="commentsModal" role="dialog" aria-modal="true">
+      <div class="modal-card">
+        <h3 id="commentsModalTitle">Comentarios</h3>
+        <div id="commentsList">Cargando...</div>
+        <textarea
+          id="commentsInput"
+          placeholder="Escribe tu comentario (máx 400 caracteres)"
+        ></textarea>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="commentsCloseBtn">Cerrar</button>
+          <button class="btn btn-primary" id="commentsSendBtn">Enviar</button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

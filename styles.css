@@ -785,11 +785,11 @@ input[type="search"] {
 }
 
 #clearCalendar {
-  margin-right: 3px;
+  margin-right: 3px !important;
 }
 
 #downloadPDF {
-  margin-left: 3px;
+  margin-left: 3px !important;
 }
 
 /* mantiene el header del sidebar visible */
@@ -986,5 +986,78 @@ input[type="search"] {
   outline: 2px solid rgba(255, 255, 255, 0.12);
   outline-offset: 2px;
 }
+/* modal overlay */
+#commentsModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+#commentsModal .modal-card {
+  width: 100%;
+  max-width: 720px;
+  background: var(--bg-panel, #0b1115);
+  color: var(--text, #e6edf3);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+#commentsModal h3 {
+  margin: 0 0 10px 0;
+}
+#commentsList {
+  max-height: 320px;
+  overflow: auto;
+  margin-bottom: 10px;
+}
+#commentsList .comment {
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+#commentsModal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 72px;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+}
+#commentsModal .modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+#commentsModal .btn {
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+}
+#commentsModal .btn-primary {
+  background: #2da44e;
+  color: white;
+}
+#commentsModal .btn-ghost {
+  background: transparent;
+  color: var(--text-muted, #9aa4ad);
+}
+.comision-actions{
+  margin: 0 !important;
+}
+.btn{
+  margin: 0 !important;
+  padding: 8px 16px !important;
+}
 
-
+.comment-btn{
+   white-space: nowrap;
+}
