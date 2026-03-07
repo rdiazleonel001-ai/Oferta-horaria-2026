@@ -2047,15 +2047,27 @@
         const input = document.getElementById("commentsInput");
         const txt = String(input.value || "").trim();
         if (!txt) {
-          alert("Escribí un comentario");
+          window.showToast(
+            "warn",
+            "⚠️ Por favor, escribí un comentario antes de enviar.",
+          );
+          input.focus();
           return;
         }
+
         if (txt.length > 400) {
-          alert("Máximo 400 caracteres");
+          window.showToast(
+            "error",
+            "❌ El comentario es muy largo (máximo 400 caracteres).",
+          );
           return;
         }
+
         if (!_currentTeacherId) {
-          alert("No se reconoció el profesor");
+          window.showToast(
+            "error",
+            "Error crítico: No se reconoció el profesor.",
+          );
           return;
         }
 
