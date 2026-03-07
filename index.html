@@ -252,6 +252,12 @@
         const SUBJECTS_URL_INICIALES =
           "https://siusync.espacios.unaj.edu.ar/api/v1/Subject?carrerId=108&Limit=10&AcademicPeriodId=6&sortField=name&sortDirection=asc";
 
+        // --- Proxy para desarrollo (poner UNA vez, justo después de las constantes de URL) ---
+        const CORS_PROXY = "https://corsproxy.io/?"; // solo para pruebas
+        function proxied(url) {
+          return CORS_PROXY + url;
+        }
+
         let infoSubjects = [],
           basicSubjects = [],
           inicialSubjects = [],
@@ -339,10 +345,17 @@
             '<p style="padding:20px">Cargando materias...</p>';
           try {
             const [r1, r2, r3] = await Promise.all([
-              fetch(SUBJECTS_URL_INFO),
-              fetch(SUBJECTS_URL_BASIC),
-              fetch(SUBJECTS_URL_INICIALES),
+              fetch(proxied(SUBJECTS_URL_INFO)),
+              fetch(proxied(SUBJECTS_URL_BASIC)),
+              fetch(proxied(SUBJECTS_URL_INICIALES)),
             ]);
+
+            // chequeo básico de errores HTTP
+            if (!r1.ok || !r2.ok || !r3.ok) {
+              console.error("Fetch error", r1.status, r2.status, r3.status);
+              throw new Error("Error al obtener datos (status non-ok)");
+            }
+
             const d1 = await r1.json();
             const d2 = await r2.json();
             const d3 = await r3.json();
@@ -355,6 +368,12 @@
             console.error(e);
             $listaMaterias.innerHTML =
               '<p style="padding:20px; color:red">Error al cargar datos.</p>';
+            if (typeof showToast === "function") {
+              showToast(
+                "error",
+                "No se pudieron cargar las materias. (CORS / red)",
+              );
+            }
           }
         }
 
@@ -411,15 +430,26 @@
         async function loadComisiones(sId, cId, iId) {
           $comisionesResult.innerHTML = "<p>Buscando datos detallados...</p>";
           try {
-            const res = await fetch(
-              `${COMISIONES_URL}?academicPeriodId=6&instituteId=${iId}&subjectId=${sId}&careerId=${cId}`,
-            );
+            const url = `${COMISIONES_URL}?academicPeriodId=6&instituteId=${iId}&subjectId=${sId}&careerId=${cId}`;
+            const res = await fetch(proxied(url));
+
+            if (!res.ok) {
+              console.error("Fetch comisiones failed", res.status);
+              throw new Error("Error al obtener comisiones");
+            }
+
             const data = await res.json();
             renderComisiones(data);
           } catch (e) {
             console.error(e);
             $comisionesResult.innerHTML =
               '<p style="color:red">Error al cargar comisiones.</p>';
+            if (typeof showToast === "function") {
+              showToast(
+                "error",
+                "No se pudieron cargar las comisiones. (CORS / red)",
+              );
+            }
           }
         }
 
