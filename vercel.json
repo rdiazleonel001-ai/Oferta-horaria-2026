@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/unaj/:match*",
+      "destination": "https://siusync.espacios.unaj.edu.ar/api/v1/:match*"
+    }
+  ]
+}

@@ -244,19 +244,12 @@
       })();
       (() => {
         const SUBJECTS_URL_INFO =
-          "https://siusync.espacios.unaj.edu.ar/api/v1/Subject?carrerId=10&Limit=200&AcademicPeriodId=6&sortField=name&sortDirection=asc";
+          "/api/unaj/Subject?carrerId=10&Limit=200&AcademicPeriodId=6&sortField=name&sortDirection=asc";
         const SUBJECTS_URL_BASIC =
-          "https://siusync.espacios.unaj.edu.ar/api/v1/Subject?carrerId=112&Limit=200&AcademicPeriodId=6&sortField=name&sortDirection=asc";
-        const COMISIONES_URL =
-          "https://siusync.espacios.unaj.edu.ar/api/v1/Comisiones";
+          "/api/unaj/Subject?carrerId=112&Limit=200&AcademicPeriodId=6&sortField=name&sortDirection=asc";
         const SUBJECTS_URL_INICIALES =
-          "https://siusync.espacios.unaj.edu.ar/api/v1/Subject?carrerId=108&Limit=10&AcademicPeriodId=6&sortField=name&sortDirection=asc";
-
-        // --- Proxy para desarrollo (poner UNA vez, justo después de las constantes de URL) ---
-        const CORS_PROXY = "https://corsproxy.io/?"; // solo para pruebas
-        function proxied(url) {
-          return CORS_PROXY + url;
-        }
+          "/api/unaj/Subject?carrerId=108&Limit=10&AcademicPeriodId=6&sortField=name&sortDirection=asc";
+        const COMISIONES_URL = "/api/unaj/Comisiones";
 
         let infoSubjects = [],
           basicSubjects = [],
@@ -345,9 +338,9 @@
             '<p style="padding:20px">Cargando materias...</p>';
           try {
             const [r1, r2, r3] = await Promise.all([
-              fetch(proxied(SUBJECTS_URL_INFO)),
-              fetch(proxied(SUBJECTS_URL_BASIC)),
-              fetch(proxied(SUBJECTS_URL_INICIALES)),
+              fetch(SUBJECTS_URL_INFO),
+              fetch(SUBJECTS_URL_BASIC),
+              fetch(SUBJECTS_URL_INICIALES),
             ]);
 
             // chequeo básico de errores HTTP
@@ -430,8 +423,7 @@
         async function loadComisiones(sId, cId, iId) {
           $comisionesResult.innerHTML = "<p>Buscando datos detallados...</p>";
           try {
-            const url = `${COMISIONES_URL}?academicPeriodId=6&instituteId=${iId}&subjectId=${sId}&careerId=${cId}`;
-            const res = await fetch(proxied(url));
+            
 
             if (!res.ok) {
               console.error("Fetch comisiones failed", res.status);
