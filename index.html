@@ -423,7 +423,8 @@
         async function loadComisiones(sId, cId, iId) {
           $comisionesResult.innerHTML = "<p>Buscando datos detallados...</p>";
           try {
-            
+            const url = `${COMISIONES_URL}?academicPeriodId=6&instituteId=${iId}&subjectId=${sId}&careerId=${cId}`;
+            const res = await fetch(url); 
 
             if (!res.ok) {
               console.error("Fetch comisiones failed", res.status);
