@@ -18,7 +18,11 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="titulo-unaj">
-          <h1>Oferta Académica UNAJ - 2026</h1>
+          <h1>
+            <img src="logo-unaj.svg" alt="Logotipo UNAJ" class="logo-svg" />
+          </h1>
+          <span class="sr-only">Oferta Académica UNAJ - 2026</span>
+
           <span>Los horarios y aulas pueden estar sujetos a modificación.</span>
         </div>
         <input
@@ -27,23 +31,34 @@
           class="search-box"
           placeholder=" Buscar materia o código..."
         />
-        <div style="margin-top: 10px; display: flex; gap: 5px">
-          <button
-            id="btn-info"
-            class="btn btn-primary"
-            style="flex: 1; font-size: 12px"
-            onclick="switchTab('info')"
-          >
-            Informática
+        <div class="tabs-dropdown">
+          <button id="dropdown-trigger" class="btn btn-trigger">
+            <span id="selected-tab-text">Informática</span>
+            <i class="fas fa-chevron-down"></i>
           </button>
-          <button
-            id="btn-basic"
-            class="btn"
-            style="flex: 1; font-size: 12px"
-            onclick="switchTab('basic')"
-          >
-            Básicas
-          </button>
+          <div id="tabs-menu" class="tabs-menu">
+            <button
+              id="btn-info"
+              class="btn btn-primary"
+              onclick="handleTabClick('info', 'Informática')"
+            >
+              Informática
+            </button>
+            <button
+              id="btn-basic"
+              class="btn"
+              onclick="handleTabClick('basic', 'Básicas')"
+            >
+              Básicas
+            </button>
+            <button
+              id="btn-iniciales"
+              class="btn"
+              onclick="handleTabClick('iniciales', 'Iniciales')"
+            >
+              Iniciales
+            </button>
+          </div>
         </div>
       </div>
       <div id="lista-materias" class="list-container"></div>
@@ -234,9 +249,12 @@
           "https://siusync.espacios.unaj.edu.ar/api/v1/Subject?carrerId=112&Limit=200&AcademicPeriodId=6&sortField=name&sortDirection=asc";
         const COMISIONES_URL =
           "https://siusync.espacios.unaj.edu.ar/api/v1/Comisiones";
+        const SUBJECTS_URL_INICIALES =
+          "https://siusync.espacios.unaj.edu.ar/api/v1/Subject?carrerId=108&Limit=10&AcademicPeriodId=6&sortField=name&sortDirection=asc";
 
         let infoSubjects = [],
           basicSubjects = [],
+          inicialSubjects = [],
           currentTab = "info";
 
         const $search = document.getElementById("search");
@@ -303,10 +321,16 @@
 
         window.switchTab = (tab) => {
           currentTab = tab;
+
           document.getElementById("btn-info").className =
             tab === "info" ? "btn btn-primary" : "btn";
+
           document.getElementById("btn-basic").className =
             tab === "basic" ? "btn btn-primary" : "btn";
+
+          document.getElementById("btn-iniciales").className =
+            tab === "iniciales" ? "btn btn-primary" : "btn";
+
           renderSubjects();
         };
 
@@ -314,14 +338,18 @@
           $listaMaterias.innerHTML =
             '<p style="padding:20px">Cargando materias...</p>';
           try {
-            const [r1, r2] = await Promise.all([
+            const [r1, r2, r3] = await Promise.all([
               fetch(SUBJECTS_URL_INFO),
               fetch(SUBJECTS_URL_BASIC),
+              fetch(SUBJECTS_URL_INICIALES),
             ]);
             const d1 = await r1.json();
             const d2 = await r2.json();
+            const d3 = await r3.json();
+
             infoSubjects = d1.items || [];
             basicSubjects = d2.items || [];
+            inicialSubjects = d3.items || [];
             renderSubjects();
           } catch (e) {
             console.error(e);
@@ -332,7 +360,11 @@
 
         function renderSubjects() {
           const q = normalizeTextForCheck($search.value || "");
-          const list = currentTab === "info" ? infoSubjects : basicSubjects;
+          let list;
+
+          if (currentTab === "info") list = infoSubjects;
+          else if (currentTab === "basic") list = basicSubjects;
+          else if (currentTab === "iniciales") list = inicialSubjects;
           const filtered = list.filter((s) => {
             const name = normalizeTextForCheck(s.name || "");
             const code = normalizeTextForCheck(s.code || "");
@@ -2077,8 +2109,32 @@
           /* ignore */
         }
       };
+      // 1. Manejar el click del trigger para abrir/cerrar
+      document
+        .getElementById("dropdown-trigger")
+        .addEventListener("click", function (e) {
+          e.stopPropagation();
+          document.getElementById("tabs-menu").classList.toggle("show");
+        });
+
+      // 2. Cerrar el menú si hacen click afuera
+      document.addEventListener("click", () => {
+        document.getElementById("tabs-menu").classList.remove("show");
+      });
+
+      // 3. Nueva función puente para no romper tu switchTab original
+      window.handleTabClick = function (tab, label) {
+        // Actualizamos el texto del botón principal
+        document.getElementById("selected-tab-text").innerText = label;
+
+        // Llamamos a tu función original que ya maneja la lógica de datos
+        window.switchTab(tab);
+
+        // Cerramos el menú
+        document.getElementById("tabs-menu").classList.remove("show");
+      };
     </script>
-    <!-- Modal comentarios (pegar antes de </body>) -->
+
     <div id="commentsModal" role="dialog" aria-modal="true">
       <div class="modal-card">
         <h3 id="commentsModalTitle">Comentarios</h3>

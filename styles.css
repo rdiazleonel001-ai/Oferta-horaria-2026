@@ -55,6 +55,7 @@ body {
   flex-direction: column;
   justify-content: center;
   text-align: center;
+  
 }
 
 .titulo-unaj span {
@@ -74,7 +75,8 @@ body {
 }
 
 .sidebar-header {
-  padding: 20px;
+  padding: 4px 20px;
+  
   border-bottom: 1px solid #30363d;
 }
 
@@ -103,7 +105,7 @@ body {
   width: 100%;
   height: 42px;
 
-  padding: 10px 40px 10px 14px;
+  padding: 10px 15px 10px 14px;
 
   border-radius: 8px;
   border: 1px solid #30363d;
@@ -180,6 +182,10 @@ input[type="search"] {
 
 /* Celular */
 @media (max-width: 600px) {
+
+  .sidebar {
+    height: 85dvh !important; /* Esto hace que ocupe el 75% de la pantalla real del celu */
+  }
   .search-box {
     padding: 40px;
     font-size: 16px;
@@ -276,6 +282,7 @@ input[type="search"] {
 
 /* CARDS */
 .comision-card {
+  
   background: var(--sidebar-bg);
   border-radius: 12px;
   padding: 20px;
@@ -811,9 +818,7 @@ input[type="search"] {
     padding: 10px;
   }
   /* si usás fixed, asegurate de añadir padding-top al main para que no quede tapado */
-  .main-content {
-    padding-top: calc(var(--sidebar-header-height, 84px));
-  }
+
 
   /* opcional: evita que el contenido del sidebar quede detrás del header fijo */
   .sidebar {
@@ -1060,4 +1065,101 @@ input[type="search"] {
 
 .comment-btn{
    white-space: nowrap;
+}
+
+/* --- ESTILOS DEL DESPLEGABLE --- */
+.tabs-dropdown {
+  position: relative;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.btn-trigger {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--accent);
+  border: 1px solid #30363d;
+  color: var(--text-main);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-trigger:hover {
+  background: #30363d;
+}
+
+.tabs-menu {
+  display: none; /* Se activa con JS */
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 100%;
+  background: var(--sidebar-bg);
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  z-index: 1001;
+  flex-direction: column;
+  padding: 6px;
+}
+
+.tabs-menu.show {
+  display: flex;
+}
+
+/* Botones dentro del menú desplegable */
+.tabs-menu .btn {
+  background: transparent !important; /* Fuerza a que no tenga el gris de --accent */
+  color: var(--text-main) !important;
+  text-align: left;
+  border: none !important;
+  margin: 0 !important;
+}
+
+/* Efecto hover sutil para que se vea dónde pasás el mouse */
+.tabs-menu .btn:hover {
+  background: rgba(255, 255, 255, 0.05) !important; 
+}
+
+/* Mantenemos el verde para el que está activo */
+.tabs-menu .btn.btn-primary {
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+/* Esto hace que el texto del H1 no se vea en pantalla, pero sí para el SEO */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Ajusta el tamaño de tu logo aquí */
+.logo-svg {
+  width: 250px; /* Puedes cambiar este valor según necesites */
+  height: auto;
+  display: block;
+  margin-bottom: 10px;
+  padding: 0;
+  margin: 0;
+}
+
+h1{
+  display: flex;
+  justify-content:  center;
+  align-items: center;
+  padding: 0 !important;
+  margin: 5px !important;
 }
