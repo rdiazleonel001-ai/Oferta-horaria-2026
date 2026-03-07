@@ -781,7 +781,6 @@
 
           // buscar coordinador
           let coordinador = null;
-          let coordinadorAgregadoComoProfe = false;
 
           items.forEach((com) => {
             const teachers = com.teachers || [];
@@ -964,17 +963,6 @@
             actionsWrap.style.flexWrap = "wrap";
             // --- FIN: contenedor ---
             profes.forEach((nt) => {
-              if (
-                coordinador &&
-                nt.name === coordinador.name &&
-                coordinadorAgregadoComoProfe
-              ) {
-                return;
-              }
-              if (coordinador && nt.name === coordinador.name) {
-                coordinadorAgregadoComoProfe = true;
-              }
-
               const row = document.createElement("div");
               row.className = "profe-row";
 
