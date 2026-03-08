@@ -55,7 +55,6 @@ body {
   flex-direction: column;
   justify-content: center;
   text-align: center;
-  
 }
 
 .titulo-unaj span {
@@ -76,7 +75,7 @@ body {
 
 .sidebar-header {
   padding: 4px 20px;
-  
+
   border-bottom: 1px solid #30363d;
 }
 
@@ -182,7 +181,6 @@ input[type="search"] {
 
 /* Celular */
 @media (max-width: 600px) {
-
   .sidebar {
     height: 85dvh !important; /* Esto hace que ocupe el 75% de la pantalla real del celu */
   }
@@ -282,7 +280,6 @@ input[type="search"] {
 
 /* CARDS */
 .comision-card {
-  
   background: var(--sidebar-bg);
   border-radius: 12px;
   padding: 20px;
@@ -457,6 +454,10 @@ input[type="search"] {
    RESPONSIVE CELULAR (<=600px)
    ========================= */
 @media (max-width: 600px) {
+  .profe-data {
+    display: flex !important;
+    align-items: center !important;
+  }
   .sidebar-header h1 {
     font-size: 1.1rem;
     font-weight: 700;
@@ -823,7 +824,6 @@ input[type="search"] {
   }
   /* si usás fixed, asegurate de añadir padding-top al main para que no quede tapado */
 
-
   /* opcional: evita que el contenido del sidebar quede detrás del header fijo */
   .sidebar {
     padding-top: calc(var(--sidebar-header-height, 84px));
@@ -1059,16 +1059,16 @@ input[type="search"] {
   background: transparent;
   color: var(--text-muted, #9aa4ad);
 }
-.comision-actions{
+.comision-actions {
   margin: 0 !important;
 }
-.btn{
+.btn {
   margin: 0 !important;
   padding: 8px 16px !important;
 }
 
-.comment-btn{
-   white-space: nowrap;
+.comment-btn {
+  white-space: nowrap;
 }
 
 /* --- ESTILOS DEL DESPLEGABLE --- */
@@ -1107,7 +1107,7 @@ input[type="search"] {
   background: var(--sidebar-bg);
   border: 1px solid #30363d;
   border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   z-index: 1001;
   flex-direction: column;
   padding: 6px;
@@ -1128,7 +1128,7 @@ input[type="search"] {
 
 /* Efecto hover sutil para que se vea dónde pasás el mouse */
 .tabs-menu .btn:hover {
-  background: rgba(255, 255, 255, 0.05) !important; 
+  background: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* Mantenemos el verde para el que está activo */
@@ -1160,9 +1160,9 @@ input[type="search"] {
   margin: 0;
 }
 
-h1{
+h1 {
   display: flex;
-  justify-content:  center;
+  justify-content: center;
   align-items: center;
   padding: 0 !important;
   margin: 5px !important;
@@ -1172,4 +1172,3 @@ h1{
   position: fixed !important;
   z-index: 999999 !important;
 }
-
