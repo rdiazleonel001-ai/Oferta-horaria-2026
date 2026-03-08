@@ -424,7 +424,7 @@
           $comisionesResult.innerHTML = "<p>Buscando datos detallados...</p>";
           try {
             const url = `${COMISIONES_URL}?academicPeriodId=6&instituteId=${iId}&subjectId=${sId}&careerId=${cId}`;
-            const res = await fetch(url); 
+            const res = await fetch(url); // Acá está la clave, definimos 'res' correctamente
 
             if (!res.ok) {
               console.error("Fetch comisiones failed", res.status);
@@ -873,13 +873,19 @@
             dataDiv.className = "profe-data";
 
             dataDiv.innerHTML = `
+    <b>${nombre}</b>
+    <span class="tag" style="background: var(--secondary); color: white; margin-left: 8px;">
+        Coordinador
+    </span>
+    `;
+            /*dataDiv.innerHTML = `
     <b>${nombre}</b>
     <span class="tag" style="background: var(--secondary); color: white; margin-left: 8px;">
         Coordinador
     </span>
     <div><span class="info-label"><i class="fas fa-envelope"></i> Email:</span> ${emailValido(email)}</div>
     <div><span class="info-label"><i class="fas fa-university"></i> Institucional:</span> ${emailValido(instEmail)}</div>
-    `;
+    `;*/
             /*<div><span class="info-label"><i class="fas fa-id-card"></i> Edad:</span> ${edad}</div>*/
             row.appendChild(icon);
             row.appendChild(dataDiv);
@@ -1034,10 +1040,13 @@
               const edad = calcularEdad(nt.birth || "");
 
               dataDiv.innerHTML = `
+      <b>${nt.name || "Nombre no disponible"}</b>
+      `;
+              /* dataDiv.innerHTML = `
       <b>${nt.name || "Nombre no disponible"}</b>
       <div><span class="info-label"><i class="fas fa-envelope"></i> Email:</span> ${emailValido(nt.email)}</div>
       <div><span class="info-label"><i class="fas fa-university"></i> Institucional:</span> ${emailValido(nt.instEmail)}</div>
-      `;
+      `;*/
               /* <div><span class="info-label"><i class="fas fa-id-card"></i> Edad:</span> ${edad}</div>*/
               // append icon y dataDiv al row (original)
               row.appendChild(icon);
