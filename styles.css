@@ -637,6 +637,10 @@ input[type="search"] {
   #plannerPanel h2 {
     font-size: 1rem;
   }
+  .profe-row {
+    display: flex !important;
+    align-items: center !important;
+  }
 }
 
 /* --- Estilos para los nuevos iconos de profesores --- */
@@ -1168,3 +1172,4 @@ h1{
   position: fixed !important;
   z-index: 999999 !important;
 }
+
