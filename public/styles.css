@@ -638,7 +638,7 @@ footer {
   box-shadow: 0 0 30px rgba(0,229,255,0.15), 0 0 0 1px rgba(0,229,255,0.05) inset;
   border-radius: 14px;
   padding: 28px;
-  max-height: 80vh;
+  max-height: 80vh !important;
   display: flex;
   flex-direction: column;
 }
@@ -1740,4 +1740,5 @@ footer {
   .consulta-answer-row { flex-direction: column; }
   .consulta-result-summary { flex-direction: column; }
   .consulta-nav-row .btn-modal { flex: 1; }
+
 }
