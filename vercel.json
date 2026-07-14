@@ -1,6 +1,5 @@
 {
-  "framework": null,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/main" }
+    { "source": "/api/(.*)", "destination": "/api/index" }
   ]
 }
