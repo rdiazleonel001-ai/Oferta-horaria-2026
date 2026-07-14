@@ -2228,22 +2228,14 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       }
 
       async function fetchArchivosFromDirectoryIndex() {
-        try {
-          const res = await fetch("archivos/");
-          if (!res.ok) return null;
-          const html = await res.text();
-          const matches = Array.from(
-            html.matchAll(/href="([^"]+\.pdf)"/gi),
-          ).map((m) => m[1]);
-          const unique = Array.from(new Set(matches));
-          return unique.map((href) => {
-            const name = decodeURIComponent(href.split("/").pop());
-            return { name, url: cleanArchivoUrl(href) };
-          });
-        } catch (e) {
-          return null;
-        }
-      }
+  try {
+    const res = await fetch(`archivos/manifest.json?_=${Date.now()}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    return null;
+  }
+}
 
       function normalizeArchivoEntry(item) {
         if (typeof item === "string") {
