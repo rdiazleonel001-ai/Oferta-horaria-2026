@@ -1,0 +1,3161 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UNAJ - Consola de Oferta Académica</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700;800&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <div class="brand-mark">
+          <img src="logounaj.svg" alt="UNAJ" />
+        </div>
+        <div>
+          <h1>Oferta Académica - UNAJ</h1>
+          <p class="texto_terminal">
+            Terminal de consulta
+            <span class="texto_horarios"
+              >Los horarios están sujetos a modificaciones</span
+            >
+          </p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button
+          class="sound-toggle"
+          id="consultaToggle"
+          type="button"
+          title="Consultar correlativas"
+        >
+          <span class="icon" id="consultaIcon"></span>
+          <span>Consulta</span>
+        </button>
+        <button
+          class="sound-toggle"
+          id="archivosToggle"
+          type="button"
+          title="Ver archivos"
+        >
+          <span class="icon" id="archivosIcon"></span>
+          <span>Archivos</span>
+        </button>
+        <button
+          class="sound-toggle"
+          id="linksToggle"
+          type="button"
+          title="Ver links útiles"
+        >
+          <span class="icon" id="linksIcon"></span>
+          <span>Links</span>
+        </button>
+        <button
+          class="sound-toggle"
+          id="calendarToggle"
+          type="button"
+          title="Ver mi horario"
+        >
+          <span class="icon" id="calendarIcon"></span>
+          <span>Mis Horarios</span>
+          <span class="cal-count-badge" id="calCountBadge" style="display: none"
+            >0</span
+          >
+        </button>
+        <button
+          class="sound-toggle"
+          id="soundToggle"
+          type="button"
+          title="Activar/desactivar sonido"
+        >
+          <span class="icon" id="soundIcon"></span>
+          <span id="soundLabel">Sonido</span>
+        </button>
+        <div class="status-pill">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Conectando...</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <div class="panel coordinator-banner" id="coordinatorBanner">
+        <span class="coordinator-label">Coordinador de la Materia</span>
+        <div class="coordinator-row">
+          <div class="avatar-circle" id="coordinatorAvatar">—</div>
+          <span class="coordinator-name" id="coordinatorName">—</span>
+          <span class="role-badge role-badge-coord">COORDINADOR</span>
+          <button
+            class="comment-btn coordinator-btn"
+            id="coordinatorCommentBtn"
+            type="button"
+          >
+            Comentarios
+          </button>
+        </div>
+      </div>
+
+      <!-- SIDEBAR -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="label">Materias</span>
+          <span class="label" id="countLabel">0</span>
+        </div>
+        <div class="sidebar-body">
+          <select id="catSelect" class="filter-select">
+            <option value="todas">Todas</option>
+            <option value="info" selected>Informática</option>
+            <option value="basic">Básicas</option>
+            <option value="iniciales">Iniciales</option>
+            <option value="extra">Extracurricular</option>
+          </select>
+          <input
+            id="searchInput"
+            class="search-input"
+            type="search"
+            placeholder="Buscar materia o código..."
+          />
+          <div id="materiaList" class="materia-list">
+            <div class="empty-hint">Cargando catálogo...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN -->
+      <div class="panel" id="mainPanel">
+        <div class="panel-head">
+          <span class="main-title" id="mainTitle">Seleccioná una materia</span>
+        </div>
+        <div class="main-body" id="mainBody">
+          <div class="no-selection">
+            <div class="glyph">◈</div>
+            <p>
+              Esperando selección de materia para desplegar comisiones y
+              horarios.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      UNAJ DATA TERMINAL — los horarios y aulas pueden estar sujetos a
+      modificación
+    </footer>
+
+    <div id="calendarModal" class="modal-overlay">
+      <div class="modal-card calendar-card">
+        <div class="calendar-modal-head">
+          <h3>Mis Horarios</h3>
+          <div class="calendar-modal-head-actions">
+            <button
+              class="btn-modal confirm"
+              id="calendarPdfBtn"
+              title="Descargar el horario en PDF"
+            >
+              Descargar PDF
+            </button>
+            <button
+              class="btn-modal cancel"
+              id="calendarClearBtn"
+              title="Quitar todas las materias del horario"
+            >
+              Vaciar horario
+            </button>
+          </div>
+        </div>
+
+        <div id="calendarEmptyHint" class="empty-hint" style="display: none">
+          Todavía no agregaste ninguna materia. Buscá una comisión y tocá
+          "Agregar al planificador".
+        </div>
+        <div id="calendarGridWrap" class="calendar-grid-wrap">
+          <div id="calendarNoTimeRow" class="cal-notime-row"></div>
+          <div id="calendarGrid" class="cal-grid"></div>
+        </div>
+        <div id="calendarNoSchedule" class="calendar-no-schedule"></div>
+        <div id="calendarList" class="calendar-list"></div>
+        <div class="modal-actions">
+          <button class="btn-modal cancel" id="calendarCloseBtn">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="archivosModal" class="modal-overlay">
+      <div class="modal-card archivos-card">
+        <h3>Archivos</h3>
+        <div id="archivosList" class="archivos-list">
+          <div class="empty-hint">Cargando archivos...</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-modal cancel" id="archivosCloseBtn">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="linksModal" class="modal-overlay">
+      <div class="modal-card links-card">
+        <h3>Links</h3>
+        <div id="linksEmptyHint" class="empty-hint" style="display: none">
+          Todavía no hay links cargados.
+        </div>
+        <div id="linksGrid" class="links-grid"></div>
+        <div class="modal-actions">
+          <button class="btn-modal cancel" id="linksCloseBtn">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="pdfPreviewModal" class="modal-overlay">
+      <div class="modal-card pdf-preview-card">
+        <div class="pdf-preview-head">
+          <h3 id="pdfPreviewTitle">Archivo</h3>
+          <a
+            id="pdfPreviewDownload"
+            class="btn-modal confirm pdf-download-link"
+            download
+            >Descargar</a
+          >
+        </div>
+        <div class="pdf-preview-frame-wrap">
+          <iframe
+            id="pdfPreviewFrame"
+            class="pdf-preview-frame"
+            title="Vista previa de PDF"
+          ></iframe>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-modal cancel" id="pdfPreviewCloseBtn">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="consultaModal" class="modal-overlay">
+      <div class="modal-card consulta-card">
+        <div class="consulta-head">
+          <h3>Consulta de Correlativas</h3>
+          <span class="consulta-plan-tag"
+            >Plan 2022 — Ingeniería en Informática</span
+          >
+        </div>
+
+        <div id="consultaIntro" class="consulta-intro">
+          <div class="consulta-warning">
+            <span class="consulta-warning-icon">!</span>
+            <div>
+              <b>Importante antes de empezar:</b>
+              <p>
+                Contestá <b>"Sí"</b> únicamente si la materia está
+                <b>aprobada y sin final pendiente</b>. Si te falta rendir el
+                final, tenés que contestar <b>"No"</b>. Recordá que hay materias
+                en el nuevo plan que todavía no se ofertan.
+              </p>
+            </div>
+          </div>
+          <p class="consulta-desc">
+            Te voy a preguntar, en orden, por las materias cuyas correlativas ya
+            tendrías cumplidas. Podés volver atrás en cualquier momento si te
+            confundiste al responder.
+          </p>
+          <div class="modal-actions">
+            <button class="btn-modal cancel" id="consultaIntroCloseBtn">
+              Cerrar
+            </button>
+            <button class="btn-modal confirm" id="consultaStartBtn">
+              Empezar consulta
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="consultaQuestion"
+          class="consulta-question"
+          style="display: none"
+        >
+          <div class="consulta-progress-wrap">
+            <div class="consulta-progress-bar">
+              <div
+                class="consulta-progress-fill"
+                id="consultaProgressFill"
+              ></div>
+            </div>
+            <span class="consulta-progress-label" id="consultaProgressLabel"
+              >0 / 0</span
+            >
+          </div>
+
+          <div class="consulta-q-card">
+            <span class="consulta-q-eyebrow">¿Aprobaste esta materia?</span>
+            <h4 id="consultaQTitle">—</h4>
+            <div id="consultaQReqs" class="consulta-q-reqs"></div>
+          </div>
+
+          <div
+            id="consultaEquivBox"
+            class="consulta-equiv-box"
+            style="display: none"
+          >
+            <span class="consulta-equiv-icon">⇄</span>
+            <div>
+              <b>Equivalencia con el plan anterior (2014)</b>
+              <div id="consultaEquivList" class="consulta-equiv-list"></div>
+            </div>
+          </div>
+
+          <div class="consulta-answer-row">
+            <button class="consulta-answer-btn no" id="consultaNoBtn">
+              No la aprobé
+            </button>
+            <button class="consulta-answer-btn yes" id="consultaYesBtn">
+              Sí, aprobada
+            </button>
+          </div>
+
+          <div class="consulta-nav-row">
+            <button class="btn-modal cancel" id="consultaBackBtn" disabled>
+              ← Atrás
+            </button>
+            <button class="btn-modal cancel" id="consultaRestartBtn">
+              Reiniciar
+            </button>
+          </div>
+        </div>
+
+        <div id="consultaResult" class="consulta-result" style="display: none">
+          <div class="consulta-result-summary">
+            <div class="consulta-result-stat">
+              <span class="consulta-result-num" id="consultaAprobadasCount"
+                >0</span
+              >
+              <span class="consulta-result-tag">materias aprobadas</span>
+            </div>
+            <div class="consulta-result-stat highlight">
+              <span class="consulta-result-num" id="consultaHabilitadasCount"
+                >0</span
+              >
+              <span class="consulta-result-tag">podés cursar ahora</span>
+            </div>
+          </div>
+          <div class="consulta-result-label">
+            Materias que podés cursar ahora:
+          </div>
+          <div
+            id="consultaHabilitadasList"
+            class="consulta-habilitadas-list"
+          ></div>
+          <div class="modal-actions">
+            <button class="btn-modal cancel" id="consultaRestartBtn2">
+              Volver a empezar
+            </button>
+            <button class="btn-modal confirm" id="consultaResultCloseBtn">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+    <script>
+      const BASE_URL = "";
+
+      // IDs reales usados por el sitio original para cada categoría
+      const CAREER_IDS = { info: 10, basic: 112, iniciales: 108, extra: 115 };
+      const CAT_LABELS = {
+        info: "Informática",
+        basic: "Básicas",
+        iniciales: "Iniciales",
+        extra: "Extracurricular",
+      };
+
+      let subjectsByCat = { info: [], basic: [], iniciales: [], extra: [] };
+      let currentCat = "info";
+      let selectedSubject = null;
+
+      /* ---------------- ICONOS (SVG inline, sin emojis) ---------------- */
+      const ICONS = {
+        calendar: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2.4" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M3.5 9.6H20.5" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M7.6 3.2V6.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M16.4 3.2V6.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <circle cx="8" cy="13.2" r="1" fill="currentColor"/>
+      <circle cx="12" cy="13.2" r="1" fill="currentColor"/>
+      <circle cx="16" cy="13.2" r="1" fill="currentColor"/>
+      <circle cx="8" cy="17" r="1" fill="currentColor"/>
+      <circle cx="12" cy="17" r="1" fill="currentColor"/>
+    </svg>`,
+        soundOn: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 9.5V14.5H7.6L12.6 18.3V5.7L7.6 9.5H4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M16 9C17 10 17 14 16 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M18.4 6.6C20.6 9.2 20.6 14.8 18.4 17.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>`,
+        soundOff: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 9.5V14.5H7.6L12.6 18.3V5.7L7.6 9.5H4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M16.2 9.8L20.2 13.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M20.2 9.8L16.2 13.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>`,
+        file: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6.5 3.5H14L18.5 8V20.5H6.5V3.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M14 3.5V8H18.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M9 13H16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M9 16.4H16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>`,
+        download: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 4V15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M7.5 11L12 15.5L16.5 11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M5 18.5H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    </svg>`,
+        link: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9.5 14.5L14.5 9.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M11 6.8L12.4 5.4C14 3.8 16.6 3.8 18.2 5.4C19.8 7 19.8 9.6 18.2 11.2L16.8 12.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M13 17.2L11.6 18.6C10 20.2 7.4 20.2 5.8 18.6C4.2 17 4.2 14.4 5.8 12.8L7.2 11.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    </svg>`,
+        consulta: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 9.5C9 7.6 10.5 6.2 12.2 6.2C13.9 6.2 15.2 7.4 15.2 9C15.2 10.4 14.3 11 13.3 11.7C12.4 12.3 12 12.9 12 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="17.3" r="1.05" fill="currentColor"/>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+    </svg>`,
+      };
+      document.getElementById("calendarIcon").innerHTML = ICONS.calendar;
+      document.getElementById("archivosIcon").innerHTML = ICONS.file;
+      document.getElementById("linksIcon").innerHTML = ICONS.link;
+      document.getElementById("consultaIcon").innerHTML = ICONS.consulta;
+
+      /* ---------------- SONIDO (Web Audio API, sin archivos externos) ---------------- */
+      let audioCtx = null;
+      let soundMuted = localStorage.getItem("unaj_sound_muted") === "1";
+
+      function getCtx() {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        return audioCtx;
+      }
+      function beep(freq = 880, duration = 0.08, type = "sine", vol = 0.05) {
+        if (soundMuted) return;
+        try {
+          const ctx = getCtx();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = type;
+          osc.frequency.value = freq;
+          gain.gain.value = vol;
+          osc.connect(gain).connect(ctx.destination);
+          osc.start();
+          gain.gain.exponentialRampToValueAtTime(
+            0.0001,
+            ctx.currentTime + duration,
+          );
+          osc.stop(ctx.currentTime + duration + 0.02);
+        } catch (e) {
+          /* ignore si el navegador bloquea audio sin gesto previo */
+        }
+      }
+      function sndSelect() {
+        beep(1200, 0.05, "square", 0.03);
+      }
+      function sndSuccess() {
+        beep(880, 0.07, "sine", 0.04);
+        setTimeout(() => beep(1320, 0.09, "sine", 0.04), 90);
+      }
+      function sndError() {
+        beep(220, 0.18, "sawtooth", 0.05);
+      }
+      function sndTick() {
+        beep(2200, 0.02, "sine", 0.012);
+      }
+
+      /* ---------------- TOGGLE DE SONIDO ---------------- */
+      function updateSoundToggleUI() {
+        const btn = document.getElementById("soundToggle");
+        const icon = document.getElementById("soundIcon");
+        const label = document.getElementById("soundLabel");
+        if (!btn) return;
+        if (soundMuted) {
+          btn.classList.add("muted");
+          icon.innerHTML = ICONS.soundOff;
+          label.textContent = "Silenciado";
+        } else {
+          btn.classList.remove("muted");
+          icon.innerHTML = ICONS.soundOn;
+          label.textContent = "Sonido";
+        }
+      }
+
+      document.getElementById("soundToggle").addEventListener("click", () => {
+        soundMuted = !soundMuted;
+        localStorage.setItem("unaj_sound_muted", soundMuted ? "1" : "0");
+        updateSoundToggleUI();
+        if (!soundMuted) sndTick();
+      });
+
+      updateSoundToggleUI();
+
+      /* ---------------- CARGA INICIAL: las 3 categorías en paralelo ---------------- */
+      async function loadAllSubjects() {
+        const dot = document.getElementById("statusDot");
+        const statusText = document.getElementById("statusText");
+        statusText.textContent = "Conectando...";
+
+        try {
+          const [rInfo, rBasic, rIniciales, rExtra] = await Promise.all([
+  fetch(`${BASE_URL}/api/materias/${CAREER_IDS.info}`),
+  fetch(`${BASE_URL}/api/materias/${CAREER_IDS.basic}`),
+  fetch(`${BASE_URL}/api/materias/${CAREER_IDS.iniciales}`),
+  fetch(`${BASE_URL}/api/materias/${CAREER_IDS.extra}`),
+]);
+
+const [dInfo, dBasic, dIniciales, dExtra] = await Promise.all([
+  rInfo.json(), rBasic.json(), rIniciales.json(), rExtra.json(),
+]);
+
+subjectsByCat.info = Array.isArray(dInfo) ? dInfo : (dInfo.items || []);
+subjectsByCat.basic = Array.isArray(dBasic) ? dBasic : (dBasic.items || []);
+subjectsByCat.iniciales = Array.isArray(dIniciales) ? dIniciales : (dIniciales.items || []);
+subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
+
+          dot.classList.remove("off");
+          statusText.textContent = "Conectado";
+          sndSuccess();
+          renderList();
+        } catch (err) {
+          dot.classList.add("off");
+          statusText.textContent = "Error de conexión";
+          sndError();
+          document.getElementById("materiaList").innerHTML =
+            `<div class="error-line">No se pudo conectar con el backend (${BASE_URL}). ¿Está corriendo uvicorn?</div>`;
+        }
+      }
+
+      /* ---------------- RENDER LISTA (con filtro de categoría + búsqueda) ---------------- */
+      function normalizeText(s) {
+        return String(s || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase();
+      }
+
+      function getVisibleSubjects() {
+        let list;
+        if (currentCat === "todas") {
+  list = [
+    ...subjectsByCat.info.map(s => ({ ...s, _cat: "info" })),
+    ...subjectsByCat.basic.map(s => ({ ...s, _cat: "basic" })),
+    ...subjectsByCat.iniciales.map(s => ({ ...s, _cat: "iniciales" })),
+    ...subjectsByCat.extra.map(s => ({ ...s, _cat: "extra" })),
+  ];
+} else {
+          list = subjectsByCat[currentCat].map((s) => ({
+            ...s,
+            _cat: currentCat,
+          }));
+        }
+
+        const q = normalizeText(document.getElementById("searchInput").value);
+        if (!q) return list;
+        return list.filter(
+          (s) =>
+            normalizeText(s.name).includes(q) ||
+            normalizeText(s.code).includes(q),
+        );
+      }
+
+      function renderList() {
+        const container = document.getElementById("materiaList");
+        const items = getVisibleSubjects();
+        document.getElementById("countLabel").textContent = items.length;
+
+        if (items.length === 0) {
+          container.innerHTML = `<div class="empty-hint">No se encontraron materias.</div>`;
+          return;
+        }
+
+        container.innerHTML = "";
+        items.forEach((s, i) => {
+          const div = document.createElement("div");
+          div.className = "materia-item";
+          div.style.animationDelay = `${Math.min(i * 18, 300)}ms`;
+          const codigo = s.code || "—";
+          const catTag =
+            currentCat === "todas"
+              ? `<span class="cat-tag">${CAT_LABELS[s._cat]}</span>`
+              : "";
+          div.innerHTML = `
+        <b>${escapeHtml(s.name || "Materia sin nombre")}</b>
+        <span>Código: ${escapeHtml(codigo)}</span>
+        ${catTag}
+      `;
+          div.addEventListener("click", () => selectSubject(s, div));
+          container.appendChild(div);
+        });
+      }
+
+      document.getElementById("catSelect").addEventListener("change", (e) => {
+        currentCat = e.target.value;
+        sndTick();
+        renderList();
+      });
+      document
+        .getElementById("searchInput")
+        .addEventListener("input", () => renderList());
+
+      /* ---------------- SELECCIÓN DE MATERIA -> HORARIOS ---------------- */
+      async function selectSubject(subject, el) {
+        sndSelect();
+        document
+          .querySelectorAll(".materia-item.active")
+          .forEach((x) => x.classList.remove("active"));
+        el.classList.add("active");
+        selectedSubject = subject;
+
+        document.getElementById("mainTitle").textContent =
+          subject.name || "Materia seleccionada";
+        const mainBody = document.getElementById("mainBody");
+        mainBody.innerHTML = `
+      <div class="loading-line">
+        <div class="bar"></div>
+        <span>Consultando comisiones...</span>
+      </div>
+    `;
+        renderCoordinatorBanner(null);
+
+        // En celular: al elegir materia, bajamos automáticamente al panel principal
+        // para no tener que scrollear manualmente.
+        if (window.matchMedia("(max-width: 860px)").matches) {
+          const mainPanel = document.getElementById("mainPanel");
+          if (mainPanel) {
+            setTimeout(() => {
+              mainPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 60);
+          }
+        }
+
+        const instituteId =
+          subject.instituteId ||
+          (subject.institute && subject.institute.id) ||
+          7;
+        const careerId =
+          (subject.carrer && subject.carrer.id) ||
+          CAREER_IDS[subject._cat] ||
+          CAREER_IDS[currentCat] ||
+          null;
+
+        const payload = [
+          {
+            instituteId: instituteId,
+            subjectId: subject.subjectId,
+            careerId: careerId,
+            academicPeriodId: 6,
+          },
+        ];
+
+        try {
+          const res = await fetch(`${BASE_URL}/api/horarios`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          const items = Array.isArray(data) ? data : data.items || [];
+          renderCoordinatorBanner(findCoordinator(items));
+          renderComisiones(items);
+          sndSuccess();
+        } catch (err) {
+          mainBody.innerHTML = `<div class="error-line">Error al consultar comisiones: ${escapeHtml(err.message)}</div>`;
+          sndError();
+        }
+      }
+
+      function findCoordinator(items) {
+        if (!Array.isArray(items)) return null;
+        for (const com of items) {
+          const teachers = Array.isArray(com.teachers) ? com.teachers : [];
+          for (const t of teachers) {
+            let name = "",
+              role = "";
+            if (typeof t === "string") {
+              name = t;
+            } else {
+              name = t.teacherFullName || t.fullName || t.name || "";
+              role =
+                t.teacherRoleName ||
+                t.teacherRoleDescription ||
+                t.role ||
+                t.roleName ||
+                "";
+            }
+            if (name && /coordinad/i.test(role)) {
+              return { name, role };
+            }
+          }
+        }
+        return null;
+      }
+
+      function getInitial(name) {
+        const n = String(name || "").trim();
+        return n ? n.charAt(0).toUpperCase() : "?";
+      }
+
+      function renderCoordinatorBanner(coord) {
+        const banner = document.getElementById("coordinatorBanner");
+        if (!banner) return;
+        if (!coord) {
+          banner.style.display = "none";
+          return;
+        }
+        document.getElementById("coordinatorName").textContent = coord.name;
+        document.getElementById("coordinatorAvatar").textContent = getInitial(
+          coord.name,
+        );
+        banner.style.display = "block";
+
+        const btn = document.getElementById("coordinatorCommentBtn");
+        const safeKey = coord.name.replace(/[.#$\[\]]/g, "").trim();
+        btn.textContent = "Comentarios";
+        btn.onclick = safeKey
+          ? () => openCommentsModal(safeKey, coord.name)
+          : null;
+        btn.disabled = !safeKey;
+        if (safeKey && typeof updateCommentCountBadge === "function") {
+          updateCommentCountBadge(safeKey, btn);
+        }
+      }
+
+      /* ---------------- Detección de docentes DRC / SE ---------------- */
+      function isDRC(role) {
+        return /\bDRC\b/i.test(role || "");
+      }
+      function isSE(role) {
+        return /\bSE\b/i.test(role || "");
+      }
+      function pickPrimaryTeacher(normalizedTeachers) {
+        return (
+          normalizedTeachers.find((t) => isDRC(t.role)) ||
+          normalizedTeachers.find((t) => isSE(t.role)) ||
+          null
+        );
+      }
+
+      function isAsincronica(modalidad) {
+        return /asincr/i.test(modalidad || "");
+      }
+
+      /* ==================== CONSULTA DE CORRELATIVAS ==================== */
+
+      // Estructura: código -> [nombre, [correlativas requeridas]] (Plan 2022)
+      const CONSULTA_PLAN = {
+        "01": ["Problemas de Historia Argentina", []],
+        "02": ["Conceptos de Programación", []],
+        "03": ["Introducción a la Matemática", []],
+        "04": ["Taller de Lectura y Escritura", []],
+        "05": ["Programación con Objetos", ["02", "03"]],
+        "06": ["Prácticas Culturales", []],
+        "07": ["Álgebra I", ["03"]],
+        "08": ["Matemática Discreta", ["03"]],
+        "09": ["Taller de Ingeniería", []],
+        10: ["Álgebra II", ["07"]],
+        11: ["Algoritmos y Estructuras de Datos", ["05", "08"]],
+        12: ["Organización de Computadoras", ["05", "08"]],
+        13: ["Cálculo I", ["03"]],
+        14: ["Organización y Sistemas", ["08", "09"]],
+        15: ["Probabilidad", ["10", "13"]],
+        16: ["Cálculo II", ["13"]],
+        17: ["Complejidad Temporal y Patrones de Diseño de Software", ["11"]],
+        18: ["Arquitectura de Computadoras", ["12"]],
+        19: ["Fundamentos de Base de Datos", ["11", "12"]],
+        20: ["Estadística y Análisis de Datos", ["15", "16"]],
+        21: ["Física I", ["13"]],
+        22: ["Fundamentos de Sistemas Operativos", ["18"]],
+        23: ["Autómatas y Lenguajes", ["17", "18"]],
+        24: ["Ingeniería de Software", ["17", "19"]],
+        25: ["Física II", ["16", "21"]],
+        26: ["Comunicación de Datos", ["13", "18"]],
+        27: ["Proyecto Informático", ["17", "19", "24"]],
+        28: ["Economía General", ["14", "24"]],
+        29: ["Base de Datos Avanzada", ["22", "24"]],
+        30: ["Programación Concurrente y Paralela", ["22", "27"]],
+        31: ["Redes de Datos I", ["13", "18"]],
+        32: ["Fundamentos de Aplicaciones Móviles", ["27"]],
+        33: ["Administración de Sistemas de Información", ["28"]],
+        34: ["Ingeniería, Innovación y Tecnología", ["01", "09"]],
+        35: ["Seguridad en los Sistemas de Información", ["30"]],
+        36: ["Redes de Datos II", ["25", "31"]],
+        37: ["Calidad de Software", ["24", "33"]],
+        38: ["Conceptos Avanzados de Sistemas Operativos", ["30"]],
+        39: ["Ciencia de Datos e Inteligencia Artificial", ["23", "28", "29"]],
+        40: ["Gestión de Proyectos", ["37"]],
+        41: ["Sistemas de Tiempo Real", ["30", "38"]],
+        42: ["Gestión Legal y Profesional en Informática", ["34", "39"]],
+        43: ["Inglés Aplicado a la Ingeniería I", ["37", "49"]],
+        44: ["Inglés Aplicado a la Ingeniería II", ["43"]],
+        45: ["Proyecto Integrador", ["32", "39", "40"]],
+        46: ["Conceptos de Bioinformática", ["36", "37", "39"]],
+        47: ["Cloud Computing y Big Data", ["29", "41"]],
+        48: ["Práctica Profesional Supervisada", ["40", "42"]],
+        49: ["Inglés (Extracurricular)", []],
+        50: ["Sistemas Distribuidos", ["35"]],
+        51: ["Integración de Objetos en Sistemas de IoT", ["36"]],
+        52: ["Arquitectura de las Plataformas IoT", ["36", "39"]],
+        53: ["Smart IoT", ["36", "39"]],
+        54: ["Gestión de Base de Datos", ["39"]],
+        55: ["Tráfico en Redes de Datos", ["36"]],
+        56: ["Diseño de Redes Corporativas", ["36"]],
+        57: ["Modelado y Simulación", ["20", "27"]],
+        58: ["Internet de las Cosas", ["36"]],
+        59: ["Diseño UI/UX", ["32"]],
+        60: ["Desarrollo de Aplicaciones Frontend", ["32"]],
+        61: ["Aprendizaje Automático", ["39"]],
+        62: ["Introducción al Aprendizaje Profundo", ["39"]],
+        63: ["Introducción a la Programación de Videojuegos", ["29", "32"]],
+        64: ["Ciberseguridad", ["35", "38"]],
+        65: ["Procesamiento de Imágenes y Modelado 3D", ["36", "37", "39"]],
+      };
+
+      const CONSULTA_ORDER = [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08",
+        "09",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "38",
+        "39",
+        "40",
+        "41",
+        "42",
+        "43",
+        "44",
+        "45",
+        "46",
+        "47",
+        "48",
+        "49",
+        "50",
+        "51",
+        "52",
+        "53",
+        "54",
+        "55",
+        "56",
+        "57",
+        "58",
+        "59",
+        "60",
+        "61",
+        "62",
+        "63",
+        "64",
+        "65",
+      ];
+
+      // Equivalencias: código Plan 2022 -> materias del Plan 2014 equivalentes
+      const CONSULTA_EQUIVALENCIAS = {
+        "04": ["Taller de Lectura y Escritura"],
+        "01": ["Problemas de Historia Argentina"],
+        "06": ["Prácticas Culturales"],
+        "09": ["Taller de Ingeniería"],
+        34: ["Historia de la Ingeniería y la Tecnología"],
+        "03": ["Matemática"],
+        "07": ["Matemática I"],
+        13: ["Matemática I"],
+        "02": ["Fundamentos de Informática"],
+        10: ["Matemática II"],
+        16: ["Matemática II"],
+        21: ["Física I"],
+        25: ["Física II"],
+        "05": ["Algoritmos y Programación"],
+        22: ["Sistemas Operativos I"],
+        11: ["Complejidad Temporal, Estructura de Datos y Algoritmos"],
+        19: ["Base de Datos I"],
+        31: ["Redes de Computadoras I"],
+        26: ["Información y Comunicaciones"],
+        24: ["Ingeniería de Software I"],
+        36: ["Redes de Computadoras II"],
+        27: ["Proyecto Software"],
+        35: ["Seguridad de la Información"],
+        29: ["Base de Datos II"],
+        37: ["Ingeniería de Software II"],
+        38: ["Sistemas Operativos II"],
+        32: ["Aplicaciones Móviles"],
+        40: ["Administración de Proyectos"],
+        23: ["Lenguajes Formales y Autómatas"],
+        41: ["Programación en Tiempo Real"],
+        14: ["Sistemas y Organizaciones"],
+        42: ["Legislación y Ejercicio Profesional de la Informática"],
+        28: ["Economía"],
+        15: ["Probabilidad y Estadística"],
+        17: [
+          "Complejidad Temporal, Estructuras de Datos y Algoritmos",
+          "Metodología de Programación I",
+        ],
+        "08": [
+          "Organización y Arquitectura de Computadoras",
+          "Complejidad Temporal",
+          "Base de Datos I",
+        ],
+        12: ["Organización y Arquitectura de Computadoras"],
+        18: ["Organización y Arquitectura de Computadoras"],
+        48: ["Práctica Profesional Supervisada"],
+        49: ["Inglés"],
+        46: ["Bioinformática"],
+        50: ["Sistemas Distribuidos"],
+        55: ["Tráfico de Redes"],
+        20: ["Probabilidad y Estadística (requiere seminario complementario)"],
+      };
+
+      let consultaState = {
+        index: 0,
+        aprobadas: new Set(),
+        history: [], // { askedIndex, prevAprobadasArray }
+        askedIndex: -1,
+      };
+
+      function consultaNombre(codigo) {
+        return `${codigo} - ${CONSULTA_PLAN[codigo][0]}`;
+      }
+
+      function consultaCorrelativasCumplidas(codigo, aprobadas) {
+        const reqs = CONSULTA_PLAN[codigo][1];
+        return reqs.every((r) => aprobadas.has(r));
+      }
+
+      // Busca, desde startIdx en adelante, el próximo código que se pueda preguntar
+      // (correlativas cumplidas con el set de aprobadas dado). Devuelve -1 si no
+      // queda ninguno (fin del plan), igual que el "continue" del script en Python.
+      function consultaFindNextAskable(startIdx, aprobadas) {
+        for (let i = startIdx; i < CONSULTA_ORDER.length; i++) {
+          const codigo = CONSULTA_ORDER[i];
+          if (consultaCorrelativasCumplidas(codigo, aprobadas)) return i;
+        }
+        return -1;
+      }
+
+      function consultaReqsTexto(codigo) {
+        const reqs = CONSULTA_PLAN[codigo][1];
+        if (reqs.length === 0) return "Sin correlativas previas";
+        return "Requiere: " + reqs.map((r) => consultaNombre(r)).join(" · ");
+      }
+
+      function consultaOpenModal() {
+        document.getElementById("consultaModal").style.display = "flex";
+        sndTick();
+        consultaShowIntro();
+      }
+
+      function consultaShowIntro() {
+        document.getElementById("consultaIntro").style.display = "block";
+        document.getElementById("consultaQuestion").style.display = "none";
+        document.getElementById("consultaResult").style.display = "none";
+      }
+
+      function consultaReset() {
+        consultaState = {
+          index: 0,
+          aprobadas: new Set(),
+          history: [],
+          askedIndex: -1,
+        };
+      }
+
+      function consultaStart() {
+        consultaReset();
+        document.getElementById("consultaIntro").style.display = "none";
+        document.getElementById("consultaResult").style.display = "none";
+        document.getElementById("consultaQuestion").style.display = "block";
+        consultaRenderStep();
+      }
+
+      function consultaRenderStep() {
+        const idx = consultaFindNextAskable(
+          consultaState.index,
+          consultaState.aprobadas,
+        );
+
+        if (idx === -1) {
+          consultaShowResult();
+          return;
+        }
+
+        consultaState.askedIndex = idx;
+        const codigo = CONSULTA_ORDER[idx];
+
+        // Barra de progreso (aproximada al total de materias del plan)
+        const total = CONSULTA_ORDER.length;
+        const pct = Math.round((idx / total) * 100);
+        document.getElementById("consultaProgressFill").style.width = `${pct}%`;
+        document.getElementById("consultaProgressLabel").textContent =
+          `Materia ${idx + 1} / ${total}`;
+
+        document.getElementById("consultaQTitle").textContent =
+          consultaNombre(codigo);
+        document.getElementById("consultaQReqs").textContent =
+          consultaReqsTexto(codigo);
+
+        const equivBox = document.getElementById("consultaEquivBox");
+        const equivList = document.getElementById("consultaEquivList");
+        const equivalencia = CONSULTA_EQUIVALENCIAS[codigo];
+        if (equivalencia && equivalencia.length > 0) {
+          equivBox.style.display = "flex";
+          equivList.innerHTML = equivalencia
+            .map(
+              (e) =>
+                `<span class="consulta-equiv-chip">${escapeHtml(e)}</span>`,
+            )
+            .join("");
+        } else {
+          equivBox.style.display = "none";
+          equivList.innerHTML = "";
+        }
+
+        document.getElementById("consultaBackBtn").disabled =
+          consultaState.history.length === 0;
+      }
+
+      function consultaAnswer(aprobo) {
+        const idx = consultaState.askedIndex;
+        if (idx === -1) return;
+
+        consultaState.history.push({
+          askedIndex: idx,
+          prevAprobadasArray: Array.from(consultaState.aprobadas),
+        });
+
+        if (aprobo) {
+          consultaState.aprobadas.add(CONSULTA_ORDER[idx]);
+          sndSuccess();
+        } else {
+          sndTick();
+        }
+
+        consultaState.index = idx + 1;
+        consultaRenderStep();
+      }
+
+      function consultaGoBack() {
+        if (consultaState.history.length === 0) return;
+        const entry = consultaState.history.pop();
+        consultaState.aprobadas = new Set(entry.prevAprobadasArray);
+        consultaState.index = entry.askedIndex;
+        sndTick();
+        consultaRenderStep();
+      }
+
+      function consultaShowResult() {
+        document.getElementById("consultaQuestion").style.display = "none";
+        document.getElementById("consultaResult").style.display = "block";
+
+        const aprobadas = consultaState.aprobadas;
+        const habilitadas = CONSULTA_ORDER.filter(
+          (c) =>
+            !aprobadas.has(c) && consultaCorrelativasCumplidas(c, aprobadas),
+        );
+
+        document.getElementById("consultaAprobadasCount").textContent =
+          aprobadas.size;
+        document.getElementById("consultaHabilitadasCount").textContent =
+          habilitadas.length;
+
+        const list = document.getElementById("consultaHabilitadasList");
+        if (habilitadas.length === 0) {
+          list.innerHTML = `<div class="empty-hint">No hay materias disponibles con lo respondido hasta ahora.</div>`;
+        } else {
+          const sorted = [...habilitadas].sort(
+            (a, b) => a.length - b.length || a.localeCompare(b),
+          );
+          list.innerHTML = sorted
+            .map((c) => {
+              const reqs = CONSULTA_PLAN[c][1];
+              const reqsTxt = reqs.length
+                ? reqs.map((r) => consultaNombre(r)).join(" · ")
+                : "sin correlativas";
+              return `
+          <div class="consulta-habilitada-item">
+            <span class="consulta-habilitada-code">${escapeHtml(c)}</span>
+            <div class="consulta-habilitada-info">
+              <b>${escapeHtml(CONSULTA_PLAN[c][0])}</b>
+              <span>${escapeHtml(reqsTxt)}</span>
+            </div>
+          </div>`;
+            })
+            .join("");
+        }
+        sndSuccess();
+      }
+
+      function consultaCloseModal() {
+        document.getElementById("consultaModal").style.display = "none";
+      }
+
+      document
+        .getElementById("consultaToggle")
+        .addEventListener("click", consultaOpenModal);
+      document
+        .getElementById("consultaIntroCloseBtn")
+        .addEventListener("click", consultaCloseModal);
+      document
+        .getElementById("consultaStartBtn")
+        .addEventListener("click", consultaStart);
+      document
+        .getElementById("consultaYesBtn")
+        .addEventListener("click", () => consultaAnswer(true));
+      document
+        .getElementById("consultaNoBtn")
+        .addEventListener("click", () => consultaAnswer(false));
+      document
+        .getElementById("consultaBackBtn")
+        .addEventListener("click", consultaGoBack);
+      document
+        .getElementById("consultaRestartBtn")
+        .addEventListener("click", consultaStart);
+      document
+        .getElementById("consultaRestartBtn2")
+        .addEventListener("click", consultaStart);
+      document
+        .getElementById("consultaResultCloseBtn")
+        .addEventListener("click", consultaCloseModal);
+      document
+        .getElementById("consultaModal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "consultaModal") consultaCloseModal();
+        });
+
+      /* ==================== FIN CONSULTA DE CORRELATIVAS ==================== */
+
+      /* ==================== MI HORARIO (calendario) ==================== */
+
+      const CAL_STORAGE_KEY = "unaj_calendario_v1";
+      const CAL_DAY_ORDER = [
+        "lunes",
+        "martes",
+        "miercoles",
+        "jueves",
+        "viernes",
+        "sabado",
+        "domingo",
+      ];
+      const CAL_DAY_LABELS = {
+        lunes: "Lunes",
+        martes: "Martes",
+        miercoles: "Miércoles",
+        jueves: "Jueves",
+        viernes: "Viernes",
+        sabado: "Sábado",
+        domingo: "Domingo",
+      };
+      const CAL_START_HOUR = 7; // 07:00
+      const CAL_END_HOUR = 23; // 23:00
+      const CAL_PX_PER_HOUR = 68;
+
+      let calendarItems = loadCalendar();
+
+      function loadCalendar() {
+        try {
+          const raw = localStorage.getItem(CAL_STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function saveCalendar() {
+        try {
+          localStorage.setItem(CAL_STORAGE_KEY, JSON.stringify(calendarItems));
+        } catch (e) {}
+      }
+
+      // Normaliza nombres de día ("Miércoles", "MIERCOLES ", etc.) a una clave canónica
+      function dayKey(name) {
+        const n = normalizeText(name).trim();
+        if (!n) return null;
+        if (n.startsWith("lun")) return "lunes";
+        if (n.startsWith("mar")) return "martes";
+        if (n.startsWith("mie")) return "miercoles";
+        if (n.startsWith("jue")) return "jueves";
+        if (n.startsWith("vie")) return "viernes";
+        if (n.startsWith("sab")) return "sabado";
+        if (n.startsWith("dom")) return "domingo";
+        // algunos backends mandan abreviaturas de 2-3 letras (L, M, Mi, J, V, S, D)
+        if (/^lu?$/.test(n)) return "lunes";
+        if (/^ma?$/.test(n)) return "martes";
+        if (/^mi?$/.test(n)) return "miercoles";
+        if (/^ju?$/.test(n)) return "jueves";
+        if (/^vi?$/.test(n)) return "viernes";
+        if (/^sa?$/.test(n)) return "sabado";
+        if (/^do?$/.test(n)) return "domingo";
+        return null;
+      }
+
+      // Busca en un objeto el primer campo no vacío entre varios nombres posibles
+      // (distintas versiones del backend usan distintas convenciones de nombre).
+      // Acepta uno o varios objetos "fuente": revisa el primero por completo antes
+      // de pasar al siguiente, así se puede priorizar p. ej. un sub-objeto
+      // "schedule" por sobre el objeto del día que lo contiene.
+      function pickField(objOrList, names) {
+        const sources = Array.isArray(objOrList) ? objOrList : [objOrList];
+        for (const obj of sources) {
+          for (const n of names) {
+            if (obj && obj[n] !== undefined && obj[n] !== null && obj[n] !== "")
+              return obj[n];
+          }
+        }
+        return null;
+      }
+
+      // Distintas respuestas del backend traen el horario real anidado bajo una
+      // etiqueta "schedule" dentro de cada día (en vez de tener startHour/endHour
+      // sueltos directamente en el día). Antes el código sólo miraba los campos
+      // de primer nivel del día, así que si el horario venía únicamente adentro
+      // de "schedule" no se detectaba y la comisión quedaba fuera del
+      // planificador (como si no tuviera horario informado).
+      //
+      // Esta función devuelve, para un día "d" tal cual viene del backend, una
+      // lista de "franjas" a procesar. Cada franja es un arreglo de objetos-fuente
+      // en orden de prioridad: primero lo que venga adentro de "schedule" (puede
+      // ser un objeto único o un arreglo de franjas horarias), y por último el
+      // propio día (como respaldo, por si algún campo no está duplicado adentro
+      // de "schedule"). Si "schedule" es un arreglo con más de una franja, se
+      // devuelve una entrada por franja (p. ej. clase teórica y práctica el mismo
+      // día pero en dos horarios distintos).
+      function expandScheduleEntries(d) {
+        const raw = d && (d.schedule ?? d.horario ?? d.horarios);
+        if (!raw) return [[d]];
+        if (Array.isArray(raw)) {
+          if (raw.length === 0) return [[d]];
+          return raw.map((entry) => [entry, d]);
+        }
+        if (typeof raw === "object") {
+          return [[raw, d]];
+        }
+        return [[d]];
+      }
+
+      // Extrae HH:MM de un string de hora y lo devuelve en minutos desde 00:00, o null si no se pudo.
+      // Soporta variantes: "7:00", "07:00", "07.00", "0700", "19hs", "19 h 00", "19:00:00",
+      // y también formato 12 horas con AM/PM: "9:00AM", "1:00 PM", "9:00 a. m.", etc.
+      function parseTimeToMinutes(str) {
+        if (str === null || str === undefined) return null;
+        if (typeof str === "number") {
+          // algunos backends mandan directamente minutos desde medianoche
+          if (str > 0 && str < 24) return Math.round(str * 60); // ej: 7.5 -> 7:30
+          if (str >= 24 && str < 1440) return Math.round(str);
+          if (str >= 100 && str < 2400) {
+            // ej: 700, 1930
+            const h = Math.floor(str / 100),
+              m = str % 100;
+            return h * 60 + m;
+          }
+        }
+        let s = String(str).trim();
+        if (!s) return null;
+
+        // Formato 12 horas con AM/PM: "9:00AM", "1:00 PM", "9:00a.m.", "1:00p. m.", etc.
+        // Se busca ANTES que el resto de los formatos porque "1:00PM" matchea
+        // también la regex genérica de HH:MM (dando 01:00, la 1 de la madrugada)
+        // y sin este chequeo antes, el PM se perdía silenciosamente.
+        let mAmPm = s.match(
+          /(\d{1,2})\s*[:.]?\s*(\d{2})?\s*([aApP])\.?\s*\.?\s*m\.?/i,
+        );
+        if (mAmPm) {
+          let h = parseInt(mAmPm[1], 10);
+          const min = mAmPm[2] ? parseInt(mAmPm[2], 10) : 0;
+          const isPM = /p/i.test(mAmPm[3]);
+          if (!isNaN(h) && !isNaN(min) && h <= 12 && min < 60) {
+            if (h === 12) h = 0; // 12:00 AM = 00:00, 12:00 PM = 12:00
+            if (isPM) h += 12;
+            return h * 60 + min;
+          }
+        }
+
+        // HH:MM, HH.MM, HHhMM, HH:MM:SS
+        let m = s.match(/(\d{1,2})\s*[:.hH]\s*(\d{2})/);
+        if (m) {
+          const h = parseInt(m[1], 10),
+            min = parseInt(m[2], 10);
+          if (!isNaN(h) && !isNaN(min) && h < 24 && min < 60)
+            return h * 60 + min;
+        }
+        // "1900" / "0700" (4 dígitos juntos)
+        m = s.match(/^(\d{2})(\d{2})$/);
+        if (m) {
+          const h = parseInt(m[1], 10),
+            min = parseInt(m[2], 10);
+          if (h < 24 && min < 60) return h * 60 + min;
+        }
+        // Solo la hora, sin minutos: "19", "19hs", "19 h"
+        m = s.match(/^(\d{1,2})\s*(?:hs?\.?)?$/i);
+        if (m) {
+          const h = parseInt(m[1], 10);
+          if (!isNaN(h) && h < 24) return h * 60;
+        }
+        return null;
+      }
+
+      // Si un mismo campo trae el rango completo ("19:00 a 21:00", "19:00-21:00",
+      // "19:00 hs. a 21:00 hs.", "9:00AM - 1:00PM"), devuelve [inicioMin, finMin].
+      function parseTimeRange(str) {
+        if (!str) return null;
+        const s = String(str);
+        // OJO: el separador "a" tiene que estar solo entre espacios (" a ") para
+        // no romper "AM"/"PM"/"a.m."/"p.m.", que también contienen la letra "a".
+        const parts = s
+          .split(/\s+a\s+|\s+hasta\s+|\s*[-—–]\s*/i)
+          .filter(Boolean);
+        if (parts.length >= 2) {
+          const start = parseTimeToMinutes(parts[0]);
+          const end = parseTimeToMinutes(parts[parts.length - 1]);
+          if (start !== null && end !== null) return [start, end];
+        }
+        return null;
+      }
+
+      function formatMinutes(mins) {
+        const h = Math.floor(mins / 60)
+          .toString()
+          .padStart(2, "0");
+        const m = (mins % 60).toString().padStart(2, "0");
+        return `${h}:${m}`;
+      }
+
+      // Clave estable por materia: antes se usaba solo subjectId, y como
+      // Informática / Básicas / Iniciales son catálogos distintos, dos materias
+      // de categorías distintas podían compartir el mismo subjectId y el sistema
+      // las trataba como "la misma materia" (eso disparaba el reemplazo automático
+      // que sacaba comisiones sin que el usuario lo pidiera). Ahora la categoría
+      // forma parte de la clave.
+      function subjectKey(subject) {
+        const cat = (subject && subject._cat) || "";
+        const id =
+          (subject &&
+            (subject.subjectId ?? normalizeText(subject.name || "materia"))) ??
+          "materia";
+        return `${cat}__${id}`;
+      }
+
+      function comisionKey(subject, com) {
+        const subjKey = subjectKey(subject);
+        const comKey =
+          com.commissionId ??
+          com.comisionId ??
+          normalizeText(
+            com.commissionName || com.comisionName || com.name || "comision",
+          );
+        return `${subjKey}__${comKey}`;
+      }
+
+      function uid() {
+        return (
+          "m_" +
+          Date.now().toString(36) +
+          "_" +
+          Math.random().toString(36).slice(2, 8)
+        );
+      }
+
+      // Arma los "bloques" horarios de una comisión.
+      // - timeBlocks: días con horario real (día + hora inicio/fin parseables), sin
+      //   importar si la modalidad es sincrónica o asincrónica. Estos son los que
+      //   se dibujan en la grilla del planificador. Antes, las comisiones
+      //   asincrónicas quedaban excluidas de acá aunque tuvieran horario real
+      //   informado, lo que las hacía "desaparecer" del planificador (terminaban
+      //   como chip suelto en vez de ocupar su franja horaria real).
+      // - looseDays: días de cursada que SÍ figuran en la comisión pero sin un
+      //   horario parseable (dato faltante o con formato no reconocido). Se
+      //   conservan igual para poder mostrarlos como "sin horario fijo" dentro del
+      //   día correspondiente.
+      function buildBlocksFromCom(com) {
+        const days = Array.isArray(com.days)
+          ? com.days
+          : Array.isArray(com.schedule)
+            ? com.schedule
+            : Array.isArray(com.horarios)
+              ? com.horarios
+              : [];
+        const timeBlocks = [];
+        const looseDays = [];
+        days.forEach((d) => {
+          // Una misma entrada de día puede traer más de una franja horaria real
+          // adentro de "schedule" (p. ej. teórica y práctica el mismo día). Cada
+          // franja se procesa como si fuera un día propio.
+          expandScheduleEntries(d).forEach((sources) => {
+            const dayName = pickField(sources, [
+              "daysOfWeekName",
+              "dayName",
+              "day",
+              "dayOfWeek",
+              "diaSemana",
+              "dia",
+            ]);
+            const key = dayKey(dayName);
+            const modalidad =
+              pickField(sources, [
+                "dictadoType",
+                "dictado",
+                "modalidad",
+                "modality",
+              ]) || "";
+            const aula =
+              pickField(sources, ["placeName", "aula", "place", "location"]) ||
+              "";
+            const edificio = pickField(sources, ["building", "edificio"]) || "";
+
+            const rawStart = pickField(sources, [
+              "startHour",
+              "horaInicio",
+              "startTime",
+              "start",
+              "from",
+              "horaDesde",
+            ]);
+            const rawEnd = pickField(sources, [
+              "endHour",
+              "horaFin",
+              "endTime",
+              "end",
+              "to",
+              "horaHasta",
+            ]);
+
+            let startMin = parseTimeToMinutes(rawStart);
+            let endMin = parseTimeToMinutes(rawEnd);
+
+            // Si vino todo en un solo campo como rango ("19:00 a 21:00"), lo partimos.
+            if (startMin === null || endMin === null) {
+              const rangeFromStart = parseTimeRange(rawStart);
+              const rangeFromEnd = parseTimeRange(rawEnd);
+              const range = rangeFromStart || rangeFromEnd;
+              if (range) {
+                startMin = startMin ?? range[0];
+                endMin = endMin ?? range[1];
+              }
+            }
+
+            const hasValidRange =
+              startMin !== null && endMin !== null && endMin > startMin;
+
+            // Antes acá se excluían las comisiones asincrónicas con "&& !isAsincronica(modalidad)",
+            // lo que borraba su horario real y las mandaba siempre a looseDays. Si el
+            // día y el horario se pueden interpretar, la comisión entra a la grilla
+            // igual que cualquier otra (la modalidad queda igual disponible en el bloque).
+            if (key && hasValidRange) {
+              timeBlocks.push({
+                dayKey: key,
+                startMin,
+                endMin,
+                modalidad,
+                aula,
+                edificio,
+              });
+            } else {
+              // Se conoce que hay cursada (sin horario, o con horario que no se pudo
+              // interpretar): nunca se descarta, se guarda como "suelto" para poder
+              // mostrarla igual, ubicada en su día si se conoce.
+              looseDays.push({ dayKey: key || null, modalidad, aula });
+            }
+          });
+        });
+        return { timeBlocks, looseDays };
+      }
+
+      // Busca superposiciones de "blocks" contra los items ya guardados (excluyendo excludeKey)
+      function findConflicts(blocks, excludeKey) {
+        const conflicts = [];
+        calendarItems.forEach((item) => {
+          if (item.key === excludeKey) return;
+          (item.blocks || []).forEach((existing) => {
+            blocks.forEach((nuevo) => {
+              if (existing.dayKey !== nuevo.dayKey) return;
+              const overlap =
+                existing.startMin < nuevo.endMin &&
+                nuevo.startMin < existing.endMin;
+              if (overlap) {
+                conflicts.push({
+                  subjectName: item.subjectName,
+                  comisionName: item.comisionName,
+                  dayKey: existing.dayKey,
+                  existing,
+                  nuevo,
+                });
+              }
+            });
+          });
+        });
+        return conflicts;
+      }
+
+      function isComisionInCalendar(subject, com) {
+        return calendarItems.some((i) => i.key === comisionKey(subject, com));
+      }
+
+      function addToCalendar(subject, com) {
+        const key = comisionKey(subject, com);
+        const sKey = subjectKey(subject);
+        const { timeBlocks, looseDays } = buildBlocksFromCom(com);
+
+        if (timeBlocks.length === 0 && looseDays.length === 0) {
+          showToast(
+            "warn",
+            "Esta comisión no tiene ningún dato de cursada informado.",
+          );
+          return;
+        }
+
+        // Antes, si ya había otra comisión de la misma materia en el horario, se
+        // la sacaba automáticamente para "reemplazarla". Eso era justamente lo
+        // que hacía que a veces desaparecieran materias del planificador sin que
+        // el usuario lo pidiera (sobre todo con el bug de subjectId repetido
+        // entre categorías). Ahora cada comisión que se agrega queda en el
+        // planificador de forma independiente: si el usuario quiere sacar otra
+        // comisión, lo hace a mano con "Quitar".
+        const conflicts = findConflicts(timeBlocks, key);
+
+        if (conflicts.length > 0) {
+          const detail = conflicts
+            .slice(0, 3)
+            .map(
+              (c) =>
+                `${CAL_DAY_LABELS[c.dayKey]} ${formatMinutes(c.nuevo.startMin)}-${formatMinutes(c.nuevo.endMin)} choca con "${c.subjectName}" (${c.comisionName})`,
+            )
+            .join(" · ");
+          showToast(
+            "error",
+            `No se pudo agregar: se superpone con tu horario. ${detail}`,
+            6500,
+          );
+          sndError();
+          return;
+        }
+
+        calendarItems.push({
+          key,
+          subjectKeyRef: sKey,
+          subjectName: subject.name || "Materia",
+          comisionName:
+            com.commissionName || com.comisionName || com.name || "Comisión",
+          blocks: timeBlocks,
+          looseDays,
+        });
+        saveCalendar();
+        showToast(
+          "success",
+          `Agregado al horario: ${subject.name || "Materia"} — ${com.commissionName || com.comisionName || com.name || ""}`,
+        );
+        sndSuccess();
+        renderCalendarModal();
+        updateCalCountBadge();
+        if (selectedSubject) syncCalendarButtons();
+      }
+
+      function removeFromCalendar(key) {
+        calendarItems = calendarItems.filter((i) => i.key !== key);
+        saveCalendar();
+        renderCalendarModal();
+        updateCalCountBadge();
+        if (selectedSubject) syncCalendarButtons();
+      }
+
+      function updateCalCountBadge() {
+        const badge = document.getElementById("calCountBadge");
+        if (!badge) return;
+        if (calendarItems.length === 0) {
+          badge.style.display = "none";
+        } else {
+          badge.style.display = "inline-flex";
+          badge.textContent = calendarItems.length;
+        }
+      }
+
+      function syncCalendarButtons() {
+        document.querySelectorAll("[data-cal-key]").forEach((btn) => {
+          const inCal = calendarItems.some((i) => i.key === btn.dataset.calKey);
+          setCalButtonState(btn, inCal);
+        });
+      }
+
+      function setCalButtonState(btn, inCal) {
+        if (inCal) {
+          btn.classList.add("added");
+          btn.textContent = "✓ En tu planificador (quitar)";
+        } else {
+          btn.classList.remove("added");
+          btn.textContent = "Agregar al planificador";
+        }
+      }
+
+      // Orden por horario: día de la semana (lunes -> domingo) y luego hora de
+      // inicio más temprana. Las materias sin horario horario fijo pero con día
+      // conocido quedan después de las que sí tienen horario ese mismo día; las
+      // que no tienen ningún día conocido van al final de todo.
+      function earliestSortKey(item) {
+        const dIdx = (dk) => {
+          const i = CAL_DAY_ORDER.indexOf(dk);
+          return i === -1 ? CAL_DAY_ORDER.length : i;
+        };
+        const blocks = item.blocks || [];
+        if (blocks.length > 0) {
+          let best = null;
+          blocks.forEach((b) => {
+            const k = dIdx(b.dayKey) * 100000 + b.startMin;
+            if (best === null || k < best) best = k;
+          });
+          return best;
+        }
+        const looseWithDay = (item.looseDays || []).find((l) => l.dayKey);
+        if (looseWithDay) {
+          return dIdx(looseWithDay.dayKey) * 100000 + 100000; // después de los horarios de ese día
+        }
+        return CAL_DAY_ORDER.length * 100000 + 100000; // sin día: al final de todo
+      }
+
+      function getSortedCalendarItems() {
+        return [...calendarItems].sort(
+          (a, b) => earliestSortKey(a) - earliestSortKey(b),
+        );
+      }
+
+      /* ---- Layout de bloques por día: apilados desde arriba, en orden
+     cronológico, sin huecos por horas libres ----
+
+     Antes esta función posicionaba cada bloque con un "top" absoluto
+     calculado a partir de CAL_START_HOUR (07:00), así que si la primera
+     clase del día empezaba, por ejemplo, a las 19:00, el rectángulo
+     aparecía "corrido" bien abajo dejando toda esa franja vacía arriba.
+     Ahora se agrupan los bloques que se solapan entre sí (directa o
+     indirectamente) en "componentes conectados", esos grupos se ordenan
+     cronológicamente por su horario de inicio, y se apilan uno debajo del
+     otro empezando desde arriba (top:0), sin dejar hueco por las horas en
+     que no hay nada agendado. Dentro de cada grupo se mantiene la posición
+     relativa proporcional a la duración real (para que se note visualmente
+     cuál bloque es más largo y cómo se solapan entre sí), pero el grupo
+     como conjunto arranca pegado al final del grupo anterior. */
+      function layoutDayBlocksPacked(entries) {
+        const FIXED_BLOCK_HEIGHT = 140;
+        if (entries.length === 0) return { placed: [], totalHeight: 0 };
+
+        const n = entries.length;
+
+        // 1) Agrupar en componentes conectados por solapamiento de horario.
+        const groupOf = new Array(n).fill(-1);
+        let groupCount = 0;
+        for (let i = 0; i < n; i++) {
+          if (groupOf[i] !== -1) continue;
+          const stack = [i];
+          groupOf[i] = groupCount;
+          while (stack.length) {
+            const cur = stack.pop();
+            for (let j = 0; j < n; j++) {
+              if (groupOf[j] !== -1) continue;
+              const a = entries[cur].block,
+                b = entries[j].block;
+              const overlap = a.startMin < b.endMin && b.startMin < a.endMin;
+              if (overlap) {
+                groupOf[j] = groupCount;
+                stack.push(j);
+              }
+            }
+          }
+          groupCount++;
+        }
+
+        const groups = [];
+        for (let g = 0; g < groupCount; g++) {
+          const idxs = [];
+          for (let i = 0; i < n; i++) if (groupOf[i] === g) idxs.push(i);
+          groups.push(idxs);
+        }
+
+        // 2) Orden cronológico de los grupos (por su inicio más temprano), para
+        // que el apilado quede ordenado según el horario real.
+        groups.sort((ga, gb) => {
+          const aMin = Math.min(...ga.map((i) => entries[i].block.startMin));
+          const bMin = Math.min(...gb.map((i) => entries[i].block.startMin));
+          return aMin - bMin;
+        });
+
+        const GROUP_GAP = 10; // separación vertical entre grupos consecutivos
+        const placed = new Array(n);
+        let runningTop = 0;
+
+        groups.forEach((idxs) => {
+          // Orden determinístico dentro del grupo.
+          idxs.sort((ia, ib) => {
+            const a = entries[ia].block,
+              b = entries[ib].block;
+            if (a.startMin !== b.startMin) return a.startMin - b.startMin;
+            if (a.endMin !== b.endMin) return a.endMin - b.endMin;
+            return String(entries[ia].item.subjectName).localeCompare(
+              String(entries[ib].item.subjectName),
+            );
+          });
+
+          // 3) Asignación de columnas (greedy) dentro del grupo, para las
+          // materias que sí se superponen en el mismo horario.
+          const columnEnds = [];
+          const colOf = new Array(idxs.length);
+          idxs.forEach((idx, order) => {
+            const block = entries[idx].block;
+            let col = columnEnds.findIndex((end) => end <= block.startMin);
+            if (col === -1) {
+              col = columnEnds.length;
+              columnEnds.push(block.endMin);
+            } else {
+              columnEnds[col] = block.endMin;
+            }
+            colOf[order] = col;
+          });
+
+          // Total de columnas real del grupo (barrido de tiempo / sweep line).
+          const events = [];
+          idxs.forEach((idx) => {
+            const b = entries[idx].block;
+            events.push([b.startMin, 1]);
+            events.push([b.endMin, -1]);
+          });
+          events.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+          let running = 0,
+            maxConcurrent = 0;
+          events.forEach(([, delta]) => {
+            running += delta;
+            maxConcurrent = Math.max(maxConcurrent, running);
+          });
+          const totalCols = Math.max(maxConcurrent, columnEnds.length, 1);
+
+          // 4) Alto del grupo = duración real del tramo que cubre (desde el
+          // inicio más temprano hasta el fin más tardío dentro del grupo), para
+          // conservar la proporción visual de duración sin dejar huecos con los
+          // demás grupos del día.
+          const groupMinStart = Math.min(
+            ...idxs.map((i) => entries[i].block.startMin),
+          );
+          const groupMaxEnd = Math.max(
+            ...idxs.map((i) => entries[i].block.endMin),
+          );
+          const groupHeight = FIXED_BLOCK_HEIGHT;
+
+          idxs.forEach((idx, order) => {
+            const b = entries[idx].block;
+            const relTop = 0;
+            const blockHeight = FIXED_BLOCK_HEIGHT;
+            placed[idx] = {
+              ...entries[idx],
+              top: runningTop + relTop,
+              height: blockHeight,
+              col: colOf[order],
+              cols: totalCols,
+            };
+          });
+
+          runningTop += groupHeight + GROUP_GAP;
+        });
+
+        return { placed, totalHeight: Math.max(runningTop - GROUP_GAP, 0) };
+      }
+
+      function renderCalendarModal() {
+        const emptyHint = document.getElementById("calendarEmptyHint");
+        const gridWrap = document.getElementById("calendarGridWrap");
+        const list = document.getElementById("calendarList");
+        const noScheduleWrap = document.getElementById("calendarNoSchedule");
+        const noTimeRow = document.getElementById("calendarNoTimeRow");
+
+        const sortedItems = getSortedCalendarItems();
+
+        const withSchedule = sortedItems.filter(
+          (i) => (i.blocks || []).length > 0,
+        );
+        // "Sin horario pero con día conocido" -> se muestran como chip dentro de esa
+        // columna del día, arriba de la grilla horaria.
+        const looseWithDay = [];
+        // "Sin horario y sin día conocido" -> van en la sección aparte, debajo.
+        const looseWithoutDay = [];
+
+        sortedItems.forEach((item) => {
+          (item.looseDays || []).forEach((ld) => {
+            if (ld.dayKey) looseWithDay.push({ item, loose: ld });
+            else looseWithoutDay.push({ item, loose: ld });
+          });
+          // Materias que no tienen NINGÚN bloque horario y tampoco looseDays con día
+          // (por ejemplo cargas totalmente vacías) también van a la sección aparte.
+          if (
+            (item.blocks || []).length === 0 &&
+            (item.looseDays || []).length === 0
+          ) {
+            looseWithoutDay.push({
+              item,
+              loose: { dayKey: null, modalidad: "", aula: "" },
+            });
+          }
+        });
+
+        if (sortedItems.length === 0) {
+          emptyHint.style.display = "block";
+          gridWrap.style.display = "none";
+          noScheduleWrap.innerHTML = "";
+          list.innerHTML = "";
+          noTimeRow.innerHTML = "";
+          return;
+        }
+        emptyHint.style.display = "none";
+        gridWrap.style.display = "block";
+
+        const palette = [
+          "#00e5ff",
+          "#7c4dff",
+          "#39ff88",
+          "#ff9f43",
+          "#ff4d6d",
+          "#ffd54f",
+          "#4dd0e1",
+          "#ba68c8",
+        ];
+        const colorForSubject = {};
+        let colorIdx = 0;
+        sortedItems.forEach((item) => {
+          if (!colorForSubject[item.subjectKeyRef]) {
+            colorForSubject[item.subjectKeyRef] =
+              palette[colorIdx % palette.length];
+            colorIdx++;
+          }
+        });
+        // Salvavidas: si por algún motivo un bloque referencia una materia sin
+        // color asignado, nunca queda con un color inválido (eso era lo que hacía
+        // que apareciera la columna del día pero el rectángulo quedara invisible).
+        function colorFor(subjectKeyRef) {
+          return colorForSubject[subjectKeyRef] || "#00e5ff";
+        }
+
+        // Determinar qué días se muestran: los que tengan bloques horarios O
+        // materias sin horario pero con día conocido.
+        const daysWithSchedule = new Set();
+        withSchedule.forEach((i) =>
+          i.blocks.forEach((b) => daysWithSchedule.add(b.dayKey)),
+        );
+        looseWithDay.forEach(({ loose }) => daysWithSchedule.add(loose.dayKey));
+        const usedDayKeys = CAL_DAY_ORDER.filter((dk) =>
+          daysWithSchedule.has(dk),
+        );
+        const dayKeys =
+          usedDayKeys.length > 0
+            ? usedDayKeys
+            : ["lunes", "martes", "miercoles", "jueves", "viernes"];
+
+        /* ---- Fila superior: materias sin horario fijo pero con día conocido ---- */
+        noTimeRow.style.gridTemplateColumns = `repeat(${dayKeys.length}, 1fr)`;
+        const anyLooseWithDay = looseWithDay.some(({ loose }) =>
+          dayKeys.includes(loose.dayKey),
+        );
+        if (!anyLooseWithDay) {
+          noTimeRow.innerHTML = "";
+          noTimeRow.style.display = "none";
+        } else {
+          noTimeRow.style.display = "grid";
+          noTimeRow.innerHTML = dayKeys
+            .map((dk) => {
+              const chips = looseWithDay.filter(
+                ({ loose }) => loose.dayKey === dk,
+              );
+              if (chips.length === 0)
+                return `<div class="cal-notime-cell"></div>`;
+              return `<div class="cal-notime-cell">${chips
+                .map(({ item, loose }) => {
+                  const color = colorFor(item.subjectKeyRef);
+                  return `<div class="cal-notime-chip" style="border-color:${color}">
+            <b style="color:${color}">${escapeHtml(item.subjectName)}</b>
+            <span>${escapeHtml(item.comisionName || "")}${loose.modalidad ? " · " + escapeHtml(loose.modalidad) : ""}</span>
+          </div>`;
+                })
+                .join("")}</div>`;
+            })
+            .join("");
+        }
+
+        /* ---- Grilla (ahora apilada desde arriba por día, ordenada por horario;
+       ver layoutDayBlocksPacked) ---- */
+        const grid = document.getElementById("calendarGrid");
+        grid.style.gridTemplateColumns = `repeat(${dayKeys.length}, 1fr)`;
+
+        let html = "";
+        dayKeys.forEach((dk) => {
+          html += `<div class="cal-day-header">${CAL_DAY_LABELS[dk]}</div>`;
+        });
+
+        // Se calcula primero el layout de cada día para saber el alto máximo
+        // entre columnas y que todos los días compartan la misma altura de fila.
+        const perDayLayout = {};
+        let maxColHeight = 140;
+        dayKeys.forEach((dk) => {
+          const dayEntries = [];
+          withSchedule.forEach((item) => {
+            item.blocks
+              .filter((b) => b.dayKey === dk)
+              .forEach((b) => {
+                dayEntries.push({ item, block: b });
+              });
+          });
+          const layout = layoutDayBlocksPacked(dayEntries);
+          perDayLayout[dk] = layout;
+          maxColHeight = Math.max(maxColHeight, layout.totalHeight);
+        });
+
+        dayKeys.forEach((dk) => {
+          html += `<div class="cal-day-col" style="height:${maxColHeight}px">`;
+
+          const { placed } = perDayLayout[dk];
+          placed.forEach(({ item, block: b, top, height, col, cols }) => {
+            const color = colorFor(item.subjectKeyRef);
+            const widthPct = 100 / cols;
+            const leftPct = col * widthPct;
+            const modalidadTag = b.modalidad
+              ? ` · ${escapeHtml(b.modalidad)}`
+              : "";
+            html += `
+          <div class="cal-block" style="top:${top}px; height:${height}px; left:calc(${leftPct}% + 2px); width:calc(${widthPct}% - 4px); border-color:${color}; background:${hexToRgba(color, 0.13)};">
+            <b style="color:${color}">${escapeHtml(item.subjectName)}</b>
+            <span>${escapeHtml(item.comisionName)}</span>
+            <span>${formatMinutes(b.startMin)}–${formatMinutes(b.endMin)}${b.aula ? " · " + escapeHtml(b.aula) : ""}${modalidadTag}</span>
+          </div>`;
+          });
+          html += `</div>`;
+        });
+
+        grid.innerHTML = html;
+
+        /* ---- Materias sin ningún día conocido (van aparte, debajo de la grilla) ---- */
+        if (looseWithoutDay.length === 0) {
+          noScheduleWrap.innerHTML = "";
+        } else {
+          // Deduplicar por materia (una materia puede tener más de un "looseDay" sin día)
+          const seen = new Set();
+          const uniqueChips = [];
+          looseWithoutDay.forEach(({ item, loose }) => {
+            if (seen.has(item.subjectKeyRef)) return;
+            seen.add(item.subjectKeyRef);
+            uniqueChips.push({ item, loose });
+          });
+          noScheduleWrap.innerHTML = `
+        <div class="cs-label no-schedule-label">Sin horario ni día definido</div>
+        <div class="no-schedule-chips">
+          ${uniqueChips
+            .map(({ item, loose }) => {
+              const color = colorFor(item.subjectKeyRef);
+              return `
+              <div class="no-schedule-chip" style="border-color:${color}">
+                <b style="color:${color}">${escapeHtml(item.subjectName)}</b>
+                <span>${escapeHtml(item.comisionName || "")}</span>
+                ${loose.modalidad ? `<span class="chip-day">${escapeHtml(loose.modalidad)}</span>` : ""}
+              </div>`;
+            })
+            .join("")}
+        </div>`;
+        }
+
+        // Listado textual debajo (ya ordenado por horario), con botón para quitar cada materia
+        list.innerHTML = sortedItems
+          .map(
+            (item) => `
+      <div class="cal-list-item">
+        <div>
+          <b>${escapeHtml(item.subjectName)}</b>
+          <span>${escapeHtml(item.comisionName)}</span>
+        </div>
+        <button class="btn-modal cancel cal-remove-btn" data-remove-key="${escapeHtml(item.key)}">Quitar</button>
+      </div>
+    `,
+          )
+          .join("");
+
+        list.querySelectorAll("[data-remove-key]").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            removeFromCalendar(btn.dataset.removeKey),
+          );
+        });
+      }
+
+      // Convierte un color hex "#rrggbb" a "rgba(r,g,b,a)". Usamos esto en vez de
+      // hex de 8 dígitos ("#rrggbbaa") porque html2canvas (usado para el PDF) no
+      // siempre interpreta bien la transparencia en formato hex de 8 dígitos y
+      // terminaba mostrando los bloques del planificador en blanco.
+      function hexToRgba(hex, alpha) {
+        const h = String(hex || "#00e5ff").replace("#", "");
+        const r = parseInt(h.substring(0, 2), 16) || 0;
+        const g = parseInt(h.substring(2, 4), 16) || 0;
+        const b = parseInt(h.substring(4, 6), 16) || 0;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+
+      document
+        .getElementById("calendarToggle")
+        .addEventListener("click", () => {
+          renderCalendarModal();
+          document.getElementById("calendarModal").style.display = "flex";
+          sndTick();
+        });
+      document
+        .getElementById("calendarCloseBtn")
+        .addEventListener("click", () => {
+          document.getElementById("calendarModal").style.display = "none";
+        });
+      document
+        .getElementById("calendarModal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "calendarModal")
+            document.getElementById("calendarModal").style.display = "none";
+        });
+      document
+        .getElementById("calendarClearBtn")
+        .addEventListener("click", () => {
+          if (calendarItems.length === 0) return;
+          if (!confirm("¿Vaciar todo tu horario guardado?")) return;
+          calendarItems = [];
+          saveCalendar();
+          renderCalendarModal();
+          updateCalCountBadge();
+          if (selectedSubject) syncCalendarButtons();
+        });
+
+      /* ---- Descarga del planificador en PDF (fondo blanco, listo para imprimir) ---- */
+      document
+        .getElementById("calendarPdfBtn")
+        .addEventListener("click", () => {
+          if (calendarItems.length === 0) {
+            showToast(
+              "warn",
+              "Todavía no agregaste ninguna materia a tu horario.",
+            );
+            return;
+          }
+          downloadCalendarPdf();
+        });
+
+      function downloadCalendarPdf() {
+        // Clonamos el contenido del planificador y le aplicamos una hoja de estilos
+        // "clara" para que quede prolijo si se imprime en papel. Usamos fuentes del
+        // sistema (no las variables de Google Fonts) y colores explícitos en cada
+        // nodo para que html2canvas no dependa de CSS variables ni de recursos
+        // externos.
+        //
+        // Antes el nodo a exportar se posicionaba con "position: fixed; top:0;
+        // left:0; z-index:-1" dentro de un wrapper con "height:0". Un z-index
+        // negativo crea su propio contexto de apilamiento y queda DETRÁS del
+        // resto de la página (header, paneles, etc.), que sí son opacos. Al
+        // capturar ese nodo, html2canvas terminaba mostrando lo que estaba
+        // pintado encima (el fondo oscuro de la página) en vez del contenido, y
+        // el PDF salía en blanco. Ahora en cambio lo sacamos por completo del
+        // área visible corriéndolo miles de píxeles a la izquierda, sin usar
+        // z-index: así nunca hay otro elemento superpuesto por encima.
+        const source = document.createElement("div");
+        source.className = "pdf-export-root";
+
+        const title = document.createElement("h2");
+        title.className = "pdf-export-title";
+        title.textContent = "Horarios";
+        source.appendChild(title);
+
+        const gridClone = document
+          .getElementById("calendarGridWrap")
+          .cloneNode(true);
+        source.appendChild(gridClone);
+
+        const noScheduleClone = document
+          .getElementById("calendarNoSchedule")
+          .cloneNode(true);
+        if (noScheduleClone.innerHTML.trim())
+          source.appendChild(noScheduleClone);
+
+        const listClone = document
+          .getElementById("calendarList")
+          .cloneNode(true);
+        listClone
+          .querySelectorAll(".cal-remove-btn")
+          .forEach((b) => b.remove());
+        source.appendChild(listClone);
+
+        const wrapper = document.createElement("div");
+        wrapper.style.position = "fixed";
+        wrapper.style.top = "0";
+        wrapper.style.left = "-10000px";
+        wrapper.style.width = "1000px";
+        wrapper.style.overflow = "visible";
+        wrapper.style.background = "#ffffff";
+        wrapper.appendChild(source);
+        document.body.appendChild(wrapper);
+
+        const opt = {
+          margin: 10,
+          filename: "mi-horario-unaj.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            backgroundColor: "#ffffff",
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+          },
+          jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
+        };
+
+        if (typeof html2pdf === "undefined") {
+          showToast(
+            "error",
+            "No se pudo cargar el generador de PDF (revisá tu conexión a internet).",
+          );
+          document.body.removeChild(wrapper);
+          return;
+        }
+
+        html2pdf()
+          .set(opt)
+          .from(source)
+          .save()
+          .then(() => {
+            document.body.removeChild(wrapper);
+          })
+          .catch(() => {
+            document.body.removeChild(wrapper);
+            showToast("error", "No se pudo generar el PDF.");
+          });
+      }
+
+      updateCalCountBadge();
+
+      /* ==================== FIN MI HORARIO ==================== */
+
+      /* ==================== ARCHIVOS (carpeta /archivos, PDFs) ==================== */
+
+      document
+        .getElementById("archivosToggle")
+        .addEventListener("click", () => {
+          document.getElementById("archivosModal").style.display = "flex";
+          sndTick();
+          loadArchivos();
+        });
+      document
+        .getElementById("archivosCloseBtn")
+        .addEventListener("click", () => {
+          document.getElementById("archivosModal").style.display = "none";
+        });
+      document
+        .getElementById("archivosModal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "archivosModal")
+            document.getElementById("archivosModal").style.display = "none";
+        });
+
+      function cleanArchivoUrl(url) {
+        if (!url) return url;
+        let u = String(url).trim();
+        if (/^https?:\/\//i.test(u)) return u;
+        u = u.replace(/^\/+/, "");
+        u = u.replace(/^(archivos\/)+/i, "archivos/");
+        if (!/^archivos\//i.test(u)) u = `archivos/${u}`;
+        return u;
+      }
+
+      async function loadArchivos() {
+        const list = document.getElementById("archivosList");
+        list.innerHTML = `<div class="empty-hint">Cargando archivos...</div>`;
+
+        let files = await fetchArchivosFromBackend();
+        if (!files) files = await fetchArchivosFromDirectoryIndex();
+        if (files)
+          files = files.map((f) => ({ ...f, url: cleanArchivoUrl(f.url) }));
+
+        if (!files || files.length === 0) {
+          list.innerHTML = `
+        <div class="empty-hint">
+          No se encontraron archivos. Verificá que la carpeta <b>archivos/</b> exista en la raíz
+          del proyecto y contenga PDFs, y que el servidor exponga <code>${escapeHtml(BASE_URL)}/api/archivos</code>
+          o el listado del directorio <code>archivos/</code>.
+        </div>`;
+          return;
+        }
+
+        renderArchivos(files);
+      }
+
+      async function fetchArchivosFromBackend() {
+        try {
+          const res = await fetch(`${BASE_URL}/api/archivos`);
+          if (!res.ok) return null;
+          const data = await res.json();
+          const items = Array.isArray(data) ? data : data.items || [];
+          return items.map(normalizeArchivoEntry).filter(Boolean);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      async function fetchArchivosFromDirectoryIndex() {
+        try {
+          const res = await fetch("archivos/");
+          if (!res.ok) return null;
+          const html = await res.text();
+          const matches = Array.from(
+            html.matchAll(/href="([^"]+\.pdf)"/gi),
+          ).map((m) => m[1]);
+          const unique = Array.from(new Set(matches));
+          return unique.map((href) => {
+            const name = decodeURIComponent(href.split("/").pop());
+            return { name, url: cleanArchivoUrl(href) };
+          });
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function normalizeArchivoEntry(item) {
+        if (typeof item === "string") {
+          return { name: item.split("/").pop(), url: cleanArchivoUrl(item) };
+        }
+        const name =
+          item.name ||
+          item.filename ||
+          (item.url ? item.url.split("/").pop() : null);
+        const rawUrl = item.url || item.name || null;
+        if (!name || !rawUrl) return null;
+        return { name, url: cleanArchivoUrl(rawUrl) };
+      }
+
+      function renderArchivos(files) {
+        const list = document.getElementById("archivosList");
+        list.innerHTML = "";
+        files.forEach((f) => {
+          const card = document.createElement("div");
+          card.className = "archivo-card";
+          card.innerHTML = `
+        <span class="archivo-icon">${ICONS.file}</span>
+        <span class="archivo-name">${escapeHtml(f.name)}</span>
+        <span class="archivo-open-hint">Ver</span>
+      `;
+          card.addEventListener("click", () => openPdfPreview(f));
+          list.appendChild(card);
+        });
+      }
+
+      function openPdfPreview(file) {
+        document.getElementById("pdfPreviewTitle").textContent = file.name;
+        document.getElementById("pdfPreviewFrame").src = file.url;
+        const dl = document.getElementById("pdfPreviewDownload");
+        dl.href = file.url;
+        dl.setAttribute("download", file.name);
+        document.getElementById("pdfPreviewModal").style.display = "flex";
+        document.getElementById("archivosModal").style.display = "none";
+        sndSelect();
+      }
+
+      document
+        .getElementById("pdfPreviewCloseBtn")
+        .addEventListener("click", () => {
+          document.getElementById("pdfPreviewModal").style.display = "none";
+          document.getElementById("pdfPreviewFrame").src = "";
+        });
+      document
+        .getElementById("pdfPreviewModal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "pdfPreviewModal") {
+            document.getElementById("pdfPreviewModal").style.display = "none";
+            document.getElementById("pdfPreviewFrame").src = "";
+          }
+        });
+
+      /* ==================== FIN ARCHIVOS ==================== */
+
+      /* ==================== LINKS (solo lectura para el usuario) ====================
+     Los links ya NO se agregan desde la interfaz. Se cargan de forma
+     "read-only" desde un archivo de texto plano (links.txt) ubicado en la raíz
+     del proyecto, con el mismo formato "Nombre | URL" (uno por línea).
+     Para agregar o quitar links, el administrador del sitio edita ese archivo
+     directamente en el proyecto — el usuario final no tiene forma de tocarlo. */
+
+      let linksItems = [];
+
+      function getHostname(url) {
+        try {
+          return new URL(url).hostname.replace(/^www\./, "");
+        } catch (e) {
+          return url;
+        }
+      }
+
+      function normalizeUrl(u) {
+        let url = String(u || "").trim();
+        if (!url) return null;
+        if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+        try {
+          new URL(url);
+          return url;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function parseLinksTxt(text) {
+        const lines = String(text || "")
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l && !l.startsWith("#"));
+        const parsed = [];
+        lines.forEach((line) => {
+          let name = "",
+            rawUrl = line;
+          if (line.includes("|")) {
+            const idx = line.indexOf("|");
+            name = line.slice(0, idx).trim();
+            rawUrl = line.slice(idx + 1).trim();
+          }
+          const url = normalizeUrl(rawUrl);
+          if (!url) return;
+          if (!name) name = getHostname(url);
+          parsed.push({ id: uid(), name, url });
+        });
+        return parsed;
+      }
+
+      async function loadLinksFromFile() {
+        try {
+          const res = await fetch(`links.txt?_=${Date.now()}`);
+          if (!res.ok) throw new Error("no encontrado");
+          const text = await res.text();
+          linksItems = parseLinksTxt(text);
+        } catch (e) {
+          linksItems = [];
+        }
+      }
+
+      function renderLinks() {
+        const grid = document.getElementById("linksGrid");
+        const emptyHint = document.getElementById("linksEmptyHint");
+        if (!grid) return;
+
+        if (linksItems.length === 0) {
+          emptyHint.style.display = "block";
+          emptyHint.textContent = "Todavía no hay links cargados en links.txt.";
+          grid.innerHTML = "";
+          return;
+        }
+        emptyHint.style.display = "none";
+
+        grid.innerHTML = linksItems
+          .map((item) => {
+            const host = getHostname(item.url);
+            return `
+        <div class="link-card" data-open-link="${escapeHtml(item.id)}" title="${escapeHtml(item.url)}">
+          <span class="link-favicon-wrap">
+            <img src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(host)}" alt=""
+                 class="link-favicon"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+            <span class="link-icon-fallback" style="display:none">${ICONS.link}</span>
+          </span>
+          <span class="link-info">
+            <b>${escapeHtml(item.name)}</b>
+            <span>${escapeHtml(host)}</span>
+          </span>
+        </div>`;
+          })
+          .join("");
+
+        grid.querySelectorAll("[data-open-link]").forEach((card) => {
+          card.addEventListener("click", () => {
+            const item = linksItems.find((l) => l.id === card.dataset.openLink);
+            if (item) {
+              sndSelect();
+              window.open(item.url, "_blank", "noopener");
+            }
+          });
+        });
+      }
+
+      document
+        .getElementById("linksToggle")
+        .addEventListener("click", async () => {
+          document.getElementById("linksModal").style.display = "flex";
+          sndTick();
+          document.getElementById("linksGrid").innerHTML = "";
+          document.getElementById("linksEmptyHint").style.display = "block";
+          document.getElementById("linksEmptyHint").textContent =
+            "Cargando links...";
+          await loadLinksFromFile();
+          renderLinks();
+        });
+      document.getElementById("linksCloseBtn").addEventListener("click", () => {
+        document.getElementById("linksModal").style.display = "none";
+      });
+      document.getElementById("linksModal").addEventListener("click", (e) => {
+        if (e.target.id === "linksModal")
+          document.getElementById("linksModal").style.display = "none";
+      });
+
+      /* ==================== FIN LINKS ==================== */
+
+      function renderComisiones(items) {
+        const mainBody = document.getElementById("mainBody");
+
+        if (!items || items.length === 0) {
+          mainBody.innerHTML = `
+        <div class="no-selection">
+          <div class="glyph">∅</div>
+          <p>Sin comisiones disponibles para esta materia.</p>
+        </div>`;
+          return;
+        }
+
+        mainBody.innerHTML = "";
+
+        items.forEach((com) => {
+          const nombreComision =
+            com.commissionName ||
+            com.comisionName ||
+            com.name ||
+            com.comisionId ||
+            "Comisión sin nombre";
+          const teachers = Array.isArray(com.teachers) ? com.teachers : [];
+          const normalizedTeachers = teachers
+            .map((t) => {
+              if (typeof t === "string") return { name: t, role: "" };
+              const name = t.teacherFullName || t.fullName || t.name || "";
+              const role =
+                t.teacherRoleName ||
+                t.teacherRoleDescription ||
+                t.role ||
+                t.roleName ||
+                "";
+              return { name, role };
+            })
+            .filter((t) => t.name);
+
+          const primaryTeacher = pickPrimaryTeacher(normalizedTeachers);
+
+          const days = Array.isArray(com.days)
+            ? com.days
+            : Array.isArray(com.schedule)
+              ? com.schedule
+              : Array.isArray(com.horarios)
+                ? com.horarios
+                : [];
+          // Cada "día" puede traer el horario real anidado bajo "schedule" en vez
+          // de tenerlo suelto (startHour/endHour de primer nivel). Se aplana acá
+          // igual que en buildBlocksFromCom para que el texto mostrado coincida
+          // siempre con lo que realmente se detecta para el planificador.
+          const flatDayRows = [];
+          days.forEach((d) => {
+            expandScheduleEntries(d).forEach((sources) => {
+              flatDayRows.push({
+                dia:
+                  pickField(sources, [
+                    "daysOfWeekName",
+                    "dayName",
+                    "day",
+                    "dayOfWeek",
+                    "diaSemana",
+                    "dia",
+                  ]) || "-",
+                modalidad:
+                  pickField(sources, [
+                    "dictadoType",
+                    "dictado",
+                    "modalidad",
+                    "modality",
+                  ]) || "",
+                aula:
+                  pickField(sources, [
+                    "placeName",
+                    "aula",
+                    "place",
+                    "location",
+                  ]) || "",
+                startHour: pickField(sources, [
+                  "startHour",
+                  "horaInicio",
+                  "startTime",
+                  "start",
+                  "from",
+                  "horaDesde",
+                ]),
+                endHour: pickField(sources, [
+                  "endHour",
+                  "horaFin",
+                  "endTime",
+                  "end",
+                  "to",
+                  "horaHasta",
+                ]),
+                observations: pickField(sources, [
+                  "observations",
+                  "observaciones",
+                ]),
+              });
+            });
+          });
+
+          const block = document.createElement("div");
+          block.className = "comision-block";
+
+          const head = document.createElement("div");
+          head.className = "comision-block-head";
+          head.innerHTML = `<h3>${escapeHtml(nombreComision)}</h3>`;
+          block.appendChild(head);
+
+          const divider = document.createElement("div");
+          divider.className = "comision-divider";
+          block.appendChild(divider);
+
+          const scheduleWrap = document.createElement("div");
+          scheduleWrap.className = "cs-block";
+
+          if (flatDayRows.length === 0) {
+            scheduleWrap.innerHTML = `
+          <div class="cs-section">
+            <div class="cs-label">Horarios / Señales:</div>
+            <div class="cs-line cs-muted">Sin días/horarios informados.</div>
+          </div>`;
+          } else {
+            const lines = flatDayRows.map((d) => {
+              // Antes, si la modalidad era asincrónica se descartaba el horario y
+              // solo se mostraba el día ("borraba" la hora informada). Ahora se
+              // muestra siempre el horario real si vino informado, sea cual sea
+              // la modalidad; la modalidad se agrega como aclaración aparte.
+              let line = `${d.dia} ${d.startHour && d.endHour ? `${d.startHour} - ${d.endHour}` : d.startHour || "-"}`;
+              if (d.modalidad) line += ` (${d.modalidad})`;
+              if (d.aula) line += ` • ${d.aula}`;
+              return line;
+            });
+            const obsSet = Array.from(
+              new Set(flatDayRows.map((d) => d.observations).filter(Boolean)),
+            );
+
+            let html = `
+          <div class="cs-section">
+            <div class="cs-label">Horarios / Señales:</div>
+            ${lines.map((l) => `<div class="cs-line">${escapeHtml(l)}</div>`).join("")}
+          </div>`;
+
+            if (obsSet.length > 0) {
+              html += `
+          <div class="cs-section">
+            <div class="cs-label">Observaciones:</div>
+            ${obsSet.map((o) => `<div class="cs-line cs-obs">${escapeHtml(o)}</div>`).join("")}
+          </div>`;
+            }
+            scheduleWrap.innerHTML = html;
+          }
+          block.appendChild(scheduleWrap);
+
+          const teacherCardWrap = document.createElement("div");
+          teacherCardWrap.className = "teacher-card-wrap";
+
+          if (primaryTeacher) {
+            const card = document.createElement("div");
+            card.className = "teacher-card";
+            card.title = isDRC(primaryTeacher.role)
+              ? "Docente DRC — posiblemente a cargo de esta comisión"
+              : "Profesor SE — posiblemente a cargo de esta comisión";
+            card.innerHTML = `
+          <div class="avatar-circle">${escapeHtml(getInitial(primaryTeacher.name))}</div>
+          <span class="teacher-name-solo">${escapeHtml(primaryTeacher.name)}</span>
+        `;
+            teacherCardWrap.appendChild(card);
+          } else {
+            const p = document.createElement("div");
+            p.className = "cs-line cs-muted no-teacher-hint";
+            p.textContent = "Sin docente DRC/SE informado para esta comisión";
+            teacherCardWrap.appendChild(p);
+          }
+          block.appendChild(teacherCardWrap);
+
+          const actions = document.createElement("div");
+          actions.className = "comision-actions";
+
+          const calKey = comisionKey(selectedSubject, com);
+          const calBtn = document.createElement("button");
+          calBtn.className = "comment-btn cal-add-btn";
+          calBtn.dataset.calKey = calKey;
+          setCalButtonState(calBtn, isComisionInCalendar(selectedSubject, com));
+          calBtn.addEventListener("click", () => {
+            if (isComisionInCalendar(selectedSubject, com)) {
+              removeFromCalendar(calKey);
+            } else {
+              addToCalendar(selectedSubject, com);
+            }
+          });
+          actions.appendChild(calBtn);
+
+          if (primaryTeacher) {
+            const safeKey = primaryTeacher.name
+              .replace(/[.#$\[\]]/g, "")
+              .trim();
+            const commentBtn = document.createElement("button");
+            commentBtn.className = "comment-btn";
+            commentBtn.textContent = "Comentarios";
+            if (!safeKey) {
+              commentBtn.disabled = true;
+            } else {
+              commentBtn.addEventListener("click", () =>
+                openCommentsModal(safeKey, primaryTeacher.name),
+              );
+              if (typeof updateCommentCountBadge === "function") {
+                updateCommentCountBadge(safeKey, commentBtn);
+              }
+            }
+            actions.appendChild(commentBtn);
+          }
+
+          block.appendChild(actions);
+
+          mainBody.appendChild(block);
+        });
+      }
+
+      function escapeHtml(s) {
+        if (s === null || s === undefined) return "-";
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      /* ---------------- TOASTS ---------------- */
+      if (!document.querySelector(".toast-container")) {
+        const tc = document.createElement("div");
+        tc.className = "toast-container";
+        document.body.appendChild(tc);
+      }
+      function showToast(type = "info", message = "", duration = 4200) {
+        const container = document.querySelector(".toast-container");
+        if (!container) return;
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<div class="msg">${escapeHtml(message)}</div><button class="close" aria-label="Cerrar">&times;</button>`;
+        container.appendChild(toast);
+        const close = () => {
+          toast.style.transition = "opacity .18s, transform .18s";
+          toast.style.opacity = "0";
+          toast.style.transform = "translateX(12px)";
+          setTimeout(() => toast.remove(), 200);
+        };
+        toast.querySelector(".close").addEventListener("click", close);
+        if (duration > 0) setTimeout(close, duration);
+      }
+
+      loadAllSubjects();
+    </script>
+
+    <div id="commentsModal" class="modal-overlay">
+      <div class="modal-card">
+        <h3 id="commentsModalTitle">Comentarios</h3>
+
+        <!-- Calificación por estrellas (1 a 5), separada de los comentarios de texto.
+         Se guarda en Firebase bajo ratings/{teacherId} (no se mezcla con
+         comments/{teacherId}). -->
+        <div class="ratings-block">
+          <div class="ratings-summary">
+            <span class="ratings-avg" id="ratingsAvg">—</span>
+            <span class="ratings-stars-display" id="ratingsStarsDisplay"
+              >☆☆☆☆☆</span
+            >
+            <span class="ratings-count" id="ratingsCount"
+              >(sin calificaciones)</span
+            >
+          </div>
+          <div class="ratings-vote">
+            <span class="ratings-vote-label">Tu calificación:</span>
+            <div class="star-picker" id="starPicker">
+              <button
+                class="star-btn"
+                data-star="1"
+                type="button"
+                title="1 estrella"
+              >
+                ★
+              </button>
+              <button
+                class="star-btn"
+                data-star="2"
+                type="button"
+                title="2 estrellas"
+              >
+                ★
+              </button>
+              <button
+                class="star-btn"
+                data-star="3"
+                type="button"
+                title="3 estrellas"
+              >
+                ★
+              </button>
+              <button
+                class="star-btn"
+                data-star="4"
+                type="button"
+                title="4 estrellas"
+              >
+                ★
+              </button>
+              <button
+                class="star-btn"
+                data-star="5"
+                type="button"
+                title="5 estrellas"
+              >
+                ★
+              </button>
+            </div>
+            <span class="ratings-vote-hint" id="ratingsVoteHint"></span>
+          </div>
+        </div>
+
+        <div id="commentsList">Cargando...</div>
+        <textarea
+          id="commentsInput"
+          placeholder="Escribí tu comentario (máx. 400 caracteres)"
+        ></textarea>
+        <div class="modal-actions">
+          <button class="btn-modal cancel" id="commentsCloseBtn">Cerrar</button>
+          <button class="btn-modal confirm" id="commentsSendBtn">Enviar</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        push,
+        set,
+        onValue,
+        off,
+      } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCEyPtQB9Rhlm8dWTboo8sXT4j0UBTZ8yU",
+        authDomain: "oferta-academica-comentarios.firebaseapp.com",
+        databaseURL:
+          "https://oferta-academica-comentarios-default-rtdb.firebaseio.com",
+        projectId: "oferta-academica-comentarios",
+        storageBucket: "oferta-academica-comentarios.firebasestorage.app",
+        messagingSenderId: "1067836552133",
+        appId: "1:1067836552133:web:5d793f9bc447bb0533d1ac",
+        measurementId: "G-MXBW023YQ5",
+      };
+
+      const fbApp = initializeApp(firebaseConfig);
+      const db = getDatabase(fbApp);
+
+      const BASE_URL = "";
+
+      let currentTeacherId = null;
+      let currentCommentsRef = null;
+      let currentRatingsRef = null;
+
+      /* ==================== IP PÚBLICA DEL DISPOSITIVO ====================
+     Se usa como clave del voto en Firebase (ratings/{teacherId}/{ip}) en vez
+     de un fingerprint de navegador. A diferencia de FingerprintJS, esto NO
+     depende de canvas/WebGL/fuentes que Brave randomiza a propósito — la IP
+     pública sale directo de la conexión de red, así que Brave y el modo
+     incógnito no tienen forma de ocultarla o cambiarla por su cuenta.
+
+     Trade-off a tener en cuenta: la IP identifica la RED, no el dispositivo.
+     Dos personas en el mismo wifi (facultad, casa, bar) comparten IP y van a
+     verse como "el mismo votante". Y alguien que quiera votar dos veces solo
+     necesita cambiar de red (wifi -> datos móviles, u obtener IP nueva del
+     router) para esquivar el bloqueo. Sigue siendo mucho más simple y barato
+     que un fingerprint o un login, y cubre el caso normal de "la misma
+     persona vota dos veces seguidas desde el mismo lugar".
+
+     Se usa api.ipify.org (gratuito, sin API key, habilita CORS). Si por
+     algún motivo no responde (sin conexión, servicio caído), se cae a un ID
+     local persistido en localStorage como último recurso. */
+      let deviceFingerprintPromise = null;
+
+      function localFallbackId() {
+        const FALLBACK_KEY = "unaj_device_id_fallback_v1";
+        try {
+          let id = localStorage.getItem(FALLBACK_KEY);
+          if (!id) {
+            id =
+              "fb_" +
+              Date.now().toString(36) +
+              "_" +
+              Math.random().toString(36).slice(2, 10);
+            localStorage.setItem(FALLBACK_KEY, id);
+          }
+          return id;
+        } catch (e) {
+          // Si ni siquiera localStorage está disponible, se genera un id de sesión
+          // (no persiste entre recargas, es el último recurso).
+          return "fb_session_" + Math.random().toString(36).slice(2, 10);
+        }
+      }
+
+      // Firebase Realtime Database no permite ".", "#", "$", "/", "[", "]" en las
+      // claves de sus nodos, y una IPv4/IPv6 normalmente trae puntos o dos puntos.
+      // Se reemplazan por guiones bajos para poder usar la IP directo como clave.
+      function sanitizeKeyPart(s) {
+        return String(s || "").replace(/[.#$\[\]\/:]/g, "_");
+      }
+
+      async function getDeviceFingerprint() {
+        if (deviceFingerprintPromise) return deviceFingerprintPromise;
+        deviceFingerprintPromise = (async () => {
+          try {
+            const res = await fetch("https://api.ipify.org?format=json");
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            if (data && data.ip) return sanitizeKeyPart(data.ip);
+            return localFallbackId();
+          } catch (e) {
+            // Sin conexión, servicio caído, o bloqueado por alguna extensión.
+            return localFallbackId();
+          }
+        })();
+        return deviceFingerprintPromise;
+      }
+      // Se dispara apenas carga el módulo, así la IP ya está resuelta (o
+      // resuelto el fallback) para cuando el usuario abra el modal de
+      // comentarios y quiera votar.
+      getDeviceFingerprint();
+      /* ==================== FIN IP PÚBLICA DEL DISPOSITIVO ================== */
+
+      window.openCommentsModal = function (teacherId, teacherName) {
+        if (!teacherId) teacherId = String(teacherName || "sin-id");
+
+        if (currentCommentsRef) {
+          try {
+            off(currentCommentsRef);
+          } catch (e) {}
+          currentCommentsRef = null;
+        }
+        if (currentRatingsRef) {
+          try {
+            off(currentRatingsRef);
+          } catch (e) {}
+          currentRatingsRef = null;
+        }
+
+        currentTeacherId = teacherId;
+        document.getElementById("commentsModalTitle").textContent =
+          `Comentarios — ${teacherName || teacherId}`;
+        document.getElementById("commentsModal").style.display = "flex";
+
+        const list = document.getElementById("commentsList");
+        list.innerHTML = "Cargando...";
+
+        currentCommentsRef = ref(db, `comments/${teacherId}`);
+        onValue(currentCommentsRef, (snapshot) => {
+          list.innerHTML = "";
+          if (!snapshot.exists()) {
+            list.innerHTML =
+              "<div style='color:var(--muted)'>Sin comentarios aún.</div>";
+            return;
+          }
+          snapshot.forEach((child) => {
+            const v = child.val();
+            const d = document.createElement("div");
+            d.className = "comment";
+            const when = v.date ? new Date(v.date).toLocaleString() : "";
+            d.innerHTML = `<div style="font-size:0.72rem; font-family: var(--font-mono); color: var(--muted)">${escapeHtmlLocal(when)}</div><div style="margin-top:4px">${escapeHtmlLocal(v.text)}</div>`;
+            list.appendChild(d);
+          });
+          list.scrollTop = list.scrollHeight;
+        });
+
+        // ---- Calificación por estrellas (separada de los comentarios) ----
+        resetStarPicker();
+        currentRatingsRef = ref(db, `ratings/${teacherId}`);
+        getDeviceFingerprint().then((fingerprint) => {
+          onValue(currentRatingsRef, (snapshot) => {
+            let sum = 0,
+              count = 0;
+            let myStars = null;
+            if (snapshot.exists()) {
+              snapshot.forEach((child) => {
+                const v = child.val();
+                if (v && typeof v.stars === "number") {
+                  sum += v.stars;
+                  count++;
+                  if (child.key === fingerprint) myStars = v.stars;
+                }
+              });
+            }
+            renderRatingsSummary(sum, count);
+            applyOwnVoteState(myStars);
+          });
+        });
+      };
+
+      window.closeComments = function () {
+        document.getElementById("commentsModal").style.display = "none";
+        if (currentCommentsRef) {
+          try {
+            off(currentCommentsRef);
+          } catch (e) {}
+          currentCommentsRef = null;
+        }
+        if (currentRatingsRef) {
+          try {
+            off(currentRatingsRef);
+          } catch (e) {}
+          currentRatingsRef = null;
+        }
+        currentTeacherId = null;
+      };
+
+      window.sendComment = async function () {
+        const input = document.getElementById("commentsInput");
+        const txt = String(input.value || "").trim();
+
+        if (!txt) {
+          window.showToast("warn", "Escribí un comentario antes de enviar.");
+          input.focus();
+          return;
+        }
+        if (txt.length > 400) {
+          window.showToast(
+            "error",
+            "El comentario es muy largo (máximo 400 caracteres).",
+          );
+          return;
+        }
+        if (!currentTeacherId) {
+          window.showToast("error", "Error: no se reconoció el docente.");
+          return;
+        }
+
+        try {
+          const checkRes = await fetch(`${BASE_URL}/api/comments/check`, {
+            method: "POST",
+          });
+          if (checkRes.status === 429) {
+            const info = await checkRes.json();
+            const wait = info.waitSeconds ?? 10;
+            window.showToast(
+              "warn",
+              `Esperá ${wait}s antes de comentar de nuevo.`,
+            );
+            if (typeof window.sndError === "function") window.sndError();
+            return;
+          }
+          if (!checkRes.ok) {
+            throw new Error(`HTTP ${checkRes.status}`);
+          }
+        } catch (err) {
+          window.showToast(
+            "error",
+            "No se pudo verificar el límite de envíos (¿backend caído?).",
+          );
+          return;
+        }
+
+        try {
+          const commentsRef = ref(db, `comments/${currentTeacherId}`);
+          await push(commentsRef, { text: txt, date: Date.now() });
+          input.value = "";
+          window.showToast("success", "Comentario publicado.");
+          if (typeof window.sndSuccess === "function") window.sndSuccess();
+        } catch (err) {
+          window.showToast("error", "No se pudo publicar el comentario.");
+        }
+      };
+
+      window.updateCommentCountBadge = function (teacherId, btnEl) {
+        if (!teacherId || !btnEl) return;
+        try {
+          const commentsRef = ref(db, `comments/${teacherId}`);
+          onValue(commentsRef, (snapshot) => {
+            const n = snapshot.exists() ? snapshot.size : 0;
+            btnEl.textContent = `Comentarios (${n})`;
+          });
+        } catch (e) {
+          /* ignore */
+        }
+      };
+
+      /* ==================== CALIFICACIÓN POR ESTRELLAS (1-5) ====================
+     Se guarda en el nodo "ratings/{teacherId}" de Firebase, separado del nodo
+     "comments/{teacherId}" que usan los comentarios de texto.
+
+     ANTES el bloqueo de "un voto por persona" se controlaba con localStorage
+     (una bandera "ya voté" guardada en el navegador). El problema es que
+     localStorage no persiste en una ventana de incógnito: cerrando y abriendo
+     una nueva, la bandera desaparece y se puede volver a votar sin límite.
+
+     AHORA la clave de cada voto en Firebase es la IP pública del
+     dispositivo (ratings/{teacherId}/{ip}), obtenida de un servicio externo
+     gratuito (ver getDeviceFingerprint más arriba). Al usar `set()` (en vez
+     de `push()`) sobre esa clave fija, un voto nuevo desde la misma IP
+     SOBRESCRIBE el voto anterior en el mismo nodo en vez de sumarse como una
+     entrada nueva — el promedio sigue contando un solo voto por IP. Como
+     respaldo, si no se puede obtener la IP (sin conexión, servicio caído),
+     se usa un ID local persistido en localStorage; en ese caso el control
+     vuelve a depender del navegador, igual que antes. Nota: la IP identifica
+     la red, no la persona — dos usuarios en el mismo wifi comparten IP (ver
+     comentario completo junto a getDeviceFingerprint). */
+      let currentMyStars = null;
+      function renderRatingsSummary(sum, count) {
+        const avgEl = document.getElementById("ratingsAvg");
+        const starsEl = document.getElementById("ratingsStarsDisplay");
+        const countEl = document.getElementById("ratingsCount");
+        if (!avgEl || !starsEl || !countEl) return;
+        if (count === 0) {
+          avgEl.textContent = "—";
+          starsEl.textContent = "☆☆☆☆☆";
+          countEl.textContent = "(sin calificaciones)";
+          return;
+        }
+        const avg = sum / count;
+        avgEl.textContent = avg.toFixed(1);
+        let full = Math.max(0, Math.min(5, Math.round(avg)));
+        starsEl.textContent = "★".repeat(full) + "☆".repeat(5 - full);
+        countEl.textContent = `(${count} voto${count === 1 ? "" : "s"})`;
+      }
+
+      function resetStarPicker() {
+        currentMyStars = null;
+        const hint = document.getElementById("ratingsVoteHint");
+        document.querySelectorAll(".star-btn").forEach((b) => {
+          b.disabled = false;
+          b.classList.remove("picked");
+        });
+        if (hint) hint.textContent = "Cargando...";
+      }
+
+      function disableStarPicker() {
+        document.querySelectorAll(".star-btn").forEach((b) => {
+          b.disabled = true;
+        });
+      }
+
+      function highlightStars(n) {
+        document.querySelectorAll(".star-btn").forEach((b) => {
+          b.classList.toggle("picked", parseInt(b.dataset.star, 10) <= n);
+        });
+      }
+
+      // Aplica el estado del picker según lo que YA votó este dispositivo
+      // (myStars viene del listener de Firebase, buscando la clave que coincide
+      // con el fingerprint actual). myStars === null significa que este
+      // dispositivo todavía no votó a este docente.
+      function applyOwnVoteState(myStars) {
+        currentMyStars = myStars;
+        const hint = document.getElementById("ratingsVoteHint");
+        if (myStars === null || myStars === undefined) {
+          if (hint) hint.textContent = "";
+          document.querySelectorAll(".star-btn").forEach((b) => {
+            b.disabled = false;
+            b.classList.remove("picked");
+          });
+          return;
+        }
+        if (hint)
+          hint.textContent =
+            "Ya calificaste a este docente desde este dispositivo (podés cambiar tu voto tocando otra estrella o cancelar tocando la misma estrella).";
+        highlightStars(myStars);
+      }
+
+      async function submitRating(stars) {
+        if (!currentTeacherId) return;
+        const hint = document.getElementById("ratingsVoteHint");
+        if (hint) hint.textContent = "Enviando...";
+
+        try {
+          const fingerprint = await getDeviceFingerprint();
+          // set() sobre una clave fija (el fingerprint) en vez de push(): un voto
+          // nuevo del mismo dispositivo actualiza el existente en lugar de sumar
+          // una entrada nueva al promedio.
+          const myRatingRef = ref(
+            db,
+            `ratings/${currentTeacherId}/${fingerprint}`,
+          );
+          if (stars === currentMyStars) {
+            await set(myRatingRef, null); // Enviar null elimina el nodo en Firebase
+            if (hint) hint.textContent = "Tu calificación fue eliminada.";
+            currentMyStars = null;
+            highlightStars(0); // Apaga todas las estrellas visualmente
+            if (typeof window.sndSuccess === "function") window.sndSuccess();
+            return; // Corta la ejecución para que no vuelva a votar
+          }
+          await set(myRatingRef, { stars, date: Date.now() });
+          if (hint)
+            hint.textContent =
+              "¡Gracias por tu calificación! (podés cancelarla tocando la misma estrella)";
+          currentMyStars = stars;
+          highlightStars(stars);
+          if (typeof window.sndSuccess === "function") window.sndSuccess();
+        } catch (err) {
+          if (hint) hint.textContent = "No se pudo registrar tu voto.";
+          if (typeof window.sndError === "function") window.sndError();
+        }
+      }
+
+      document.querySelectorAll(".star-btn").forEach((btn) => {
+        btn.addEventListener("click", () =>
+          submitRating(parseInt(btn.dataset.star, 10)),
+        );
+      });
+
+      /* ==================== FIN CALIFICACIÓN POR ESTRELLAS ==================== */
+
+      function escapeHtmlLocal(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      document
+        .getElementById("commentsSendBtn")
+        .addEventListener("click", sendComment);
+      document
+        .getElementById("commentsCloseBtn")
+        .addEventListener("click", closeComments);
+      document
+        .getElementById("commentsModal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "commentsModal") closeComments();
+        });
+    </script>
+  </body>
+</html>
