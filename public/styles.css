@@ -1707,13 +1707,10 @@ footer {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 46vh;
-  overflow-y: auto;
   margin-bottom: 6px;
   padding-right: 4px;
+
 }
-.consulta-habilitadas-list::-webkit-scrollbar { width: 8px; }
-.consulta-habilitadas-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
 
 .consulta-habilitada-item {
   display: flex;
