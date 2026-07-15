@@ -1643,6 +1643,17 @@ footer {
   gap: 12px;
 }
 
+@media (max-height: 800px) {
+    .ratings-block {
+        padding: 6px 17px;
+        margin-bottom: 8px;
+    }
+
+    .modal-card {
+        max-height: 100vh !important;
+    }
+}
+
 /* ---- Resultado final ---- */
 .consulta-result { overflow-y: auto; }
 
