@@ -329,6 +329,30 @@
           </div>
         </div>
 
+        <div
+          id="consultaPlanChoice"
+          class="consulta-plan-choice"
+          style="display: none"
+        >
+          <div class="consulta-q-card">
+            <span class="consulta-q-eyebrow">Antes de mostrarte el resultado</span>
+            <h4>¿En qué plan de estudios estás inscripto/a?</h4>
+            <p class="consulta-desc">
+              Elegí tu plan para que te muestre las materias que podés cursar
+              agrupadas por año y cuatrimestre, con los códigos y nombres
+              correctos de tu plan.
+            </p>
+          </div>
+          <div class="consulta-answer-row">
+            <button class="consulta-answer-btn no" id="consultaPlanViejoBtn">
+              Plan Viejo (2014)
+            </button>
+            <button class="consulta-answer-btn yes" id="consultaPlanNuevoBtn">
+              Plan Nuevo (2022)
+            </button>
+          </div>
+        </div>
+
         <div id="consultaResult" class="consulta-result" style="display: none">
           <div class="consulta-result-summary">
             <div class="consulta-result-stat">
@@ -344,7 +368,7 @@
               <span class="consulta-result-tag">podés cursar ahora</span>
             </div>
           </div>
-          <div class="consulta-result-label">
+          <div class="consulta-result-label" id="consultaResultPlanLabel">
             Materias que podés cursar ahora:
           </div>
           <div
@@ -352,6 +376,9 @@
             class="consulta-habilitadas-list"
           ></div>
           <div class="modal-actions">
+            <button class="btn-modal cancel" id="consultaChangePlanBtn">
+              Cambiar plan
+            </button>
             <button class="btn-modal cancel" id="consultaRestartBtn2">
               Volver a empezar
             </button>
@@ -890,7 +917,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         "65",
       ];
 
-      // Equivalencias: código Plan 2022 -> materias del Plan 2014 equivalentes
+      // Equivalencias: código Plan 2022 -> materias del Plan anterior (2014)
       const CONSULTA_EQUIVALENCIAS = {
         "04": ["Taller de Lectura y Escritura"],
         "01": ["Problemas de Historia Argentina"],
@@ -945,12 +972,300 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         20: ["Probabilidad y Estadística (requiere seminario complementario)"],
       };
 
+      /* ---- Estructura del Plan Nuevo (2022): código -> año / cuatrimestre ---- */
+      const PLAN2022_UBICACION = {
+        "01": { anio: 1, cuat: 1 },
+        "02": { anio: 1, cuat: 1 },
+        "03": { anio: 1, cuat: 1 },
+        "04": { anio: 1, cuat: 1 },
+        "05": { anio: 1, cuat: 2 },
+        "06": { anio: 1, cuat: 2 },
+        "07": { anio: 1, cuat: 2 },
+        "08": { anio: 1, cuat: 2 },
+        "09": { anio: 1, cuat: 2 },
+        10: { anio: 2, cuat: 1 },
+        11: { anio: 2, cuat: 1 },
+        12: { anio: 2, cuat: 1 },
+        13: { anio: 2, cuat: 1 },
+        14: { anio: 2, cuat: 1 },
+        15: { anio: 2, cuat: 2 },
+        16: { anio: 2, cuat: 2 },
+        17: { anio: 2, cuat: 2 },
+        18: { anio: 2, cuat: 2 },
+        19: { anio: 2, cuat: 2 },
+        20: { anio: 3, cuat: 1 },
+        21: { anio: 3, cuat: 1 },
+        22: { anio: 3, cuat: 1 },
+        23: { anio: 3, cuat: 1 },
+        24: { anio: 3, cuat: 1 },
+        25: { anio: 3, cuat: 2 },
+        26: { anio: 3, cuat: 2 },
+        27: { anio: 3, cuat: 2 },
+        28: { anio: 3, cuat: 2 },
+        29: { anio: 3, cuat: 2 },
+        30: { anio: 4, cuat: 1 },
+        31: { anio: 4, cuat: 1 },
+        32: { anio: 4, cuat: 1 },
+        33: { anio: 4, cuat: 1 },
+        34: { anio: 4, cuat: 1 },
+        35: { anio: 4, cuat: 2 },
+        36: { anio: 4, cuat: 2 },
+        37: { anio: 4, cuat: 2 },
+        38: { anio: 4, cuat: 2 },
+        39: { anio: 4, cuat: 2 },
+        40: { anio: 5, cuat: 1 },
+        41: { anio: 5, cuat: 1 },
+        42: { anio: 5, cuat: 1 },
+        43: { anio: 5, cuat: 1 },
+        44: { anio: 5, cuat: 2 },
+        45: { anio: 5, cuat: 2 },
+        46: { anio: 5, cuat: 2 },
+        47: { anio: 5, cuat: 2 },
+        48: { anio: 5, cuat: 2, etiqueta: "Actividad Formativa Obligatoria" },
+        49: { anio: 0, cuat: 0, etiqueta: "Asignatura Extracurricular" },
+        50: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        51: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        52: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        53: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        54: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        55: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        56: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        57: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        58: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        59: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        60: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        61: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        62: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        63: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        64: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+        65: { anio: 0, cuat: 0, etiqueta: "Materias Optativas" },
+      };
+
+      /* ---- Estructura del Plan Viejo (2014): código, nombre, año, cuatrimestre ----
+     Se usa para poder agrupar por año/cuatrimestre las materias equivalentes
+     cuando el usuario responde que está en el plan viejo. La búsqueda se hace
+     por nombre normalizado (sin tildes, minúsculas), ya que las equivalencias
+     de arriba están cargadas como nombres, no como códigos del plan 2014. */
+      const PLAN2014_MATERIAS = [
+        { codigo: "CI021", nombre: "Taller de Ingeniería", anio: 1, cuat: 1 },
+        { codigo: "CI003", nombre: "Prácticas Culturales", anio: 1, cuat: 1 },
+        {
+          codigo: "CI009",
+          nombre: "Sistemas de Representación",
+          anio: 1,
+          cuat: 1,
+        },
+        { codigo: "CI002", nombre: "Matemática", anio: 1, cuat: 1 },
+        {
+          codigo: "CI001",
+          nombre: "Taller de lectura y escritura",
+          anio: 1,
+          cuat: 2,
+        },
+        {
+          codigo: "CI010",
+          nombre: "Fundamentos de Informática",
+          anio: 1,
+          cuat: 2,
+        },
+        {
+          codigo: "CI004",
+          nombre: "Problemas de Historia Argentina",
+          anio: 1,
+          cuat: 2,
+        },
+        { codigo: "CI012", nombre: "Matemática I", anio: 1, cuat: 2 },
+        { codigo: "CI022", nombre: "Matemática II", anio: 2, cuat: 1 },
+        {
+          codigo: "13001",
+          nombre: "Algoritmos y Programación",
+          anio: 2,
+          cuat: 1,
+        },
+        {
+          codigo: "13002",
+          nombre: "Organización y Arquitectura de Computadoras",
+          anio: 2,
+          cuat: 1,
+        },
+        {
+          codigo: "13003",
+          nombre: "Sistemas Operativos I",
+          anio: 2,
+          cuat: 1,
+        },
+        { codigo: "CI025", nombre: "Física I", anio: 2, cuat: 2 },
+        { codigo: "CI026", nombre: "Matemática III", anio: 2, cuat: 2 },
+        {
+          codigo: "13004",
+          nombre: "Complejidad Temporal, Estructuras de Datos y Algoritmos",
+          anio: 2,
+          cuat: 2,
+        },
+        { codigo: "13005", nombre: "Bases de Datos I", anio: 2, cuat: 2 },
+        {
+          codigo: "13006",
+          nombre: "Redes de Computadoras I",
+          anio: 2,
+          cuat: 2,
+        },
+        { codigo: "CI027", nombre: "Física II", anio: 3, cuat: 1 },
+        {
+          codigo: "13007",
+          nombre: "Metodología de Programación I",
+          anio: 3,
+          cuat: 1,
+        },
+        {
+          codigo: "13008",
+          nombre: "Información y Comunicaciones",
+          anio: 3,
+          cuat: 1,
+        },
+        {
+          codigo: "13009",
+          nombre: "Ingeniería de Software I",
+          anio: 3,
+          cuat: 1,
+        },
+        {
+          codigo: "13010",
+          nombre: "Redes de Computadoras II",
+          anio: 3,
+          cuat: 1,
+        },
+        {
+          codigo: "CI029",
+          nombre: "Probabilidad y Estadística",
+          anio: 3,
+          cuat: 2,
+        },
+        { codigo: "13011", nombre: "Proyecto Software", anio: 3, cuat: 2 },
+        { codigo: "CI011", nombre: "Química General", anio: 3, cuat: 2 },
+        {
+          codigo: "13012",
+          nombre: "Metodologías de Programación II",
+          anio: 3,
+          cuat: 2,
+        },
+        {
+          codigo: "13013",
+          nombre: "Seguridad de la Información",
+          anio: 3,
+          cuat: 2,
+        },
+        { codigo: "13014", nombre: "Bases de Datos II", anio: 4, cuat: 1 },
+        {
+          codigo: "13015",
+          nombre: "Ingeniería de Software II",
+          anio: 4,
+          cuat: 1,
+        },
+        {
+          codigo: "13016",
+          nombre: "Sistemas Operativos II",
+          anio: 4,
+          cuat: 1,
+        },
+        {
+          codigo: "13017",
+          nombre: "Seguridad en Aplicaciones",
+          anio: 4,
+          cuat: 1,
+        },
+        { codigo: "13018", nombre: "Aplicaciones Móviles", anio: 4, cuat: 1 },
+        {
+          codigo: "13019",
+          nombre: "Administración de Proyectos",
+          anio: 4,
+          cuat: 2,
+        },
+        {
+          codigo: "13020",
+          nombre: "Lenguajes Formales y Autómatas",
+          anio: 4,
+          cuat: 2,
+        },
+        {
+          codigo: "13021",
+          nombre: "Programación en Tiempo Real",
+          anio: 4,
+          cuat: 2,
+        },
+        { codigo: "13031", nombre: "Optativa I", anio: 4, cuat: 2 },
+        {
+          codigo: "CI030",
+          nombre: "Ingeniería Ambiental",
+          anio: 4,
+          cuat: 2,
+        },
+        {
+          codigo: "13023",
+          nombre: "Sistemas y Organizaciones",
+          anio: 5,
+          cuat: 1,
+        },
+        {
+          codigo: "13027",
+          nombre: "Legislación y Ejercicio Profesional de la Informática",
+          anio: 5,
+          cuat: 1,
+        },
+        { codigo: "13032", nombre: "Optativa II", anio: 5, cuat: 1 },
+        { codigo: "13033", nombre: "Optativa III", anio: 5, cuat: 1 },
+        {
+          codigo: "CI031",
+          nombre: "Gestión de Recursos Humanos",
+          anio: 5,
+          cuat: 1,
+        },
+        {
+          codigo: "CI035",
+          nombre: "Gestión de la Calidad, Higiene y Seguridad",
+          anio: 5,
+          cuat: 2,
+        },
+        { codigo: "13028", nombre: "Economía", anio: 5, cuat: 2 },
+        {
+          codigo: "13029",
+          nombre: "Práctica Profesional Supervisada",
+          anio: 5,
+          cuat: 2,
+        },
+        {
+          codigo: "IG001",
+          nombre: "Inglés",
+          anio: 0,
+          cuat: 0,
+          etiqueta: "Materia Extracurricular",
+        },
+      ];
+
+      function buscarPlan2014PorNombre(nombre) {
+        const target = normalizeText(nombre);
+        // Primero intenta match exacto y, si no hay, un match "contiene" en
+        // cualquiera de los dos sentidos (por si el nombre de la equivalencia
+        // trae una aclaración extra entre paréntesis).
+        let found = PLAN2014_MATERIAS.find(
+          (m) => normalizeText(m.nombre) === target,
+        );
+        if (!found) {
+          found = PLAN2014_MATERIAS.find(
+            (m) =>
+              target.includes(normalizeText(m.nombre)) ||
+              normalizeText(m.nombre).includes(target),
+          );
+        }
+        return found || null;
+      }
+
       let consultaState = {
         index: 0,
         aprobadas: new Set(),
         history: [], // { askedIndex, prevAprobadasArray }
         askedIndex: -1,
       };
+      let consultaHabilitadasActuales = [];
 
       function consultaNombre(codigo) {
         return `${codigo} - ${CONSULTA_PLAN[codigo][0]}`;
@@ -987,6 +1302,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       function consultaShowIntro() {
         document.getElementById("consultaIntro").style.display = "block";
         document.getElementById("consultaQuestion").style.display = "none";
+        document.getElementById("consultaPlanChoice").style.display = "none";
         document.getElementById("consultaResult").style.display = "none";
       }
 
@@ -997,11 +1313,13 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           history: [],
           askedIndex: -1,
         };
+        consultaHabilitadasActuales = [];
       }
 
       function consultaStart() {
         consultaReset();
         document.getElementById("consultaIntro").style.display = "none";
+        document.getElementById("consultaPlanChoice").style.display = "none";
         document.getElementById("consultaResult").style.display = "none";
         document.getElementById("consultaQuestion").style.display = "block";
         consultaRenderStep();
@@ -1014,7 +1332,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         );
 
         if (idx === -1) {
-          consultaShowResult();
+          consultaShowPlanChoice();
           return;
         }
 
@@ -1082,7 +1400,18 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         consultaRenderStep();
       }
 
-      function consultaShowResult() {
+      // Al terminar de preguntar todas las materias (con sus equivalencias ya
+      // mostradas pregunta a pregunta), antes de calcular y mostrar qué se puede
+      // cursar, preguntamos en qué plan está el usuario.
+      function consultaShowPlanChoice() {
+        document.getElementById("consultaQuestion").style.display = "none";
+        document.getElementById("consultaResult").style.display = "none";
+        document.getElementById("consultaPlanChoice").style.display = "block";
+        sndTick();
+      }
+
+      function consultaShowResult(plan) {
+        document.getElementById("consultaPlanChoice").style.display = "none";
         document.getElementById("consultaQuestion").style.display = "none";
         document.getElementById("consultaResult").style.display = "block";
 
@@ -1091,37 +1420,154 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           (c) =>
             !aprobadas.has(c) && consultaCorrelativasCumplidas(c, aprobadas),
         );
+        consultaHabilitadasActuales = habilitadas;
 
         document.getElementById("consultaAprobadasCount").textContent =
           aprobadas.size;
         document.getElementById("consultaHabilitadasCount").textContent =
           habilitadas.length;
 
+        const planLabel = document.getElementById("consultaResultPlanLabel");
+        planLabel.textContent =
+          plan === "viejo"
+            ? "Materias que podés cursar ahora (Plan Viejo 2014):"
+            : "Materias que podés cursar ahora (Plan Nuevo 2022):";
+
         const list = document.getElementById("consultaHabilitadasList");
+
         if (habilitadas.length === 0) {
           list.innerHTML = `<div class="empty-hint">No hay materias disponibles con lo respondido hasta ahora.</div>`;
+          sndSuccess();
+          return;
+        }
+
+        if (plan === "viejo") {
+          list.innerHTML = renderHabilitadasPorBloquesViejo(habilitadas);
         } else {
-          const sorted = [...habilitadas].sort(
-            (a, b) => a.length - b.length || a.localeCompare(b),
-          );
-          list.innerHTML = sorted
-            .map((c) => {
-              const reqs = CONSULTA_PLAN[c][1];
-              const reqsTxt = reqs.length
-                ? reqs.map((r) => consultaNombre(r)).join(" · ")
-                : "sin correlativas";
-              return `
-          <div class="consulta-habilitada-item">
-            <span class="consulta-habilitada-code">${escapeHtml(c)}</span>
-            <div class="consulta-habilitada-info">
-              <b>${escapeHtml(CONSULTA_PLAN[c][0])}</b>
-              <span>${escapeHtml(reqsTxt)}</span>
-            </div>
-          </div>`;
-            })
-            .join("");
+          list.innerHTML = renderHabilitadasPorBloquesNuevo(habilitadas);
         }
         sndSuccess();
+      }
+
+      const NOMBRES_CUAT = { 1: "1er Cuatrimestre", 2: "2do Cuatrimestre" };
+
+      function bloqueHtml(tituloBloque, itemsHtml, variant) {
+        const variantAttr = variant ? ` data-variant="${variant}"` : "";
+        return `
+      <div class="consulta-bloque">
+        <div class="consulta-bloque-titulo"${variantAttr}>${escapeHtml(tituloBloque)}</div>
+        <div class="consulta-bloque-items">${itemsHtml}</div>
+      </div>`;
+      }
+
+      function itemHabilitadaHtml(codigo, nombre, reqsTxt) {
+        return `
+      <div class="consulta-habilitada-item">
+        <span class="consulta-habilitada-code">${escapeHtml(codigo)}</span>
+        <div class="consulta-habilitada-info">
+          <b>${escapeHtml(nombre)}</b>
+          <span>${escapeHtml(reqsTxt)}</span>
+        </div>
+      </div>`;
+      }
+
+      // Agrupa las materias habilitadas (códigos del Plan 2022) en bloques por
+      // año y cuatrimestre, usando la ubicación real de cada materia en el plan.
+      function renderHabilitadasPorBloquesNuevo(habilitadas) {
+        const grupos = new Map(); // clave "anio-cuat" -> { titulo, items: [] }
+
+        habilitadas.forEach((c) => {
+          const ubic = PLAN2022_UBICACION[c] || { anio: 0, cuat: 0 };
+          const clave = `${ubic.anio}-${ubic.cuat}`;
+          if (!grupos.has(clave)) {
+            let titulo;
+            if (ubic.anio === 0) {
+              titulo = ubic.etiqueta || "Otras";
+            } else {
+              titulo = `${ubic.anio}° Año — ${NOMBRES_CUAT[ubic.cuat] || ""}`;
+            }
+            grupos.set(clave, { titulo, orden: ubic.anio * 10 + ubic.cuat, items: [] });
+          }
+          const reqs = CONSULTA_PLAN[c][1];
+          const reqsTxt = reqs.length
+            ? reqs.map((r) => consultaNombre(r)).join(" · ")
+            : "sin correlativas";
+          grupos.get(clave).items.push(
+            itemHabilitadaHtml(c, CONSULTA_PLAN[c][0], reqsTxt),
+          );
+        });
+
+        const ordenados = Array.from(grupos.values()).sort(
+          (a, b) => a.orden - b.orden,
+        );
+        return ordenados
+          .map((g) => bloqueHtml(g.titulo, g.items.join("")))
+          .join("");
+      }
+
+      // Traduce las materias habilitadas (códigos del Plan 2022) a sus
+      // equivalentes del Plan Viejo (2014) y las agrupa por año/cuatrimestre
+      // del plan viejo. Las que no tienen equivalencia cargada se listan aparte.
+      function renderHabilitadasPorBloquesViejo(habilitadas) {
+        const grupos = new Map();
+        const sinEquivalencia = [];
+        const vistas = new Set(); // evita duplicar si dos códigos 2022 comparten equivalencia
+
+        habilitadas.forEach((c) => {
+          const equivs = CONSULTA_EQUIVALENCIAS[c];
+          if (!equivs || equivs.length === 0) {
+            sinEquivalencia.push({ codigo: c, nombre: CONSULTA_PLAN[c][0] });
+            return;
+          }
+          equivs.forEach((nombreEquiv) => {
+            const info = buscarPlan2014PorNombre(nombreEquiv);
+            const claveVista = info ? info.codigo : normalizeText(nombreEquiv);
+            if (vistas.has(claveVista)) return;
+            vistas.add(claveVista);
+
+            if (!info) {
+              sinEquivalencia.push({ codigo: "—", nombre: nombreEquiv });
+              return;
+            }
+            const clave = `${info.anio}-${info.cuat}`;
+            if (!grupos.has(clave)) {
+              let titulo;
+              if (info.anio === 0) {
+                titulo = info.etiqueta || "Otras";
+              } else {
+                titulo = `${info.anio}° Año — ${NOMBRES_CUAT[info.cuat] || ""}`;
+              }
+              grupos.set(clave, {
+                titulo,
+                orden: info.anio * 10 + info.cuat,
+                items: [],
+              });
+            }
+            grupos.get(clave).items.push(
+              itemHabilitadaHtml(
+                info.codigo,
+                info.nombre,
+                `Equivalente a ${CONSULTA_PLAN[c][0]} (Plan Nuevo)`,
+              ),
+            );
+          });
+        });
+
+        const ordenados = Array.from(grupos.values()).sort(
+          (a, b) => a.orden - b.orden,
+        );
+        let html = ordenados
+          .map((g) => bloqueHtml(g.titulo, g.items.join("")))
+          .join("");
+
+        if (sinEquivalencia.length > 0) {
+          const items = sinEquivalencia
+            .map((s) => itemHabilitadaHtml(s.codigo, s.nombre, "Sin equivalencia cargada en el Plan Viejo"))
+            .join("");
+          html += bloqueHtml("Sin equivalencia clara en el Plan Viejo", items, "warn");
+        }
+
+        return html;
       }
 
       function consultaCloseModal() {
@@ -1155,6 +1601,15 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       document
         .getElementById("consultaResultCloseBtn")
         .addEventListener("click", consultaCloseModal);
+      document
+        .getElementById("consultaPlanNuevoBtn")
+        .addEventListener("click", () => consultaShowResult("nuevo"));
+      document
+        .getElementById("consultaPlanViejoBtn")
+        .addEventListener("click", () => consultaShowResult("viejo"));
+      document
+        .getElementById("consultaChangePlanBtn")
+        .addEventListener("click", () => consultaShowPlanChoice());
       document
         .getElementById("consultaModal")
         .addEventListener("click", (e) => {
@@ -1475,10 +1930,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             const hasValidRange =
               startMin !== null && endMin !== null && endMin > startMin;
 
-            // Antes acá se excluían las comisiones asincrónicas con "&& !isAsincronica(modalidad)",
-            // lo que borraba su horario real y las mandaba siempre a looseDays. Si el
-            // día y el horario se pueden interpretar, la comisión entra a la grilla
-            // igual que cualquier otra (la modalidad queda igual disponible en el bloque).
             if (key && hasValidRange) {
               timeBlocks.push({
                 dayKey: key,
@@ -1489,9 +1940,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
                 edificio,
               });
             } else {
-              // Se conoce que hay cursada (sin horario, o con horario que no se pudo
-              // interpretar): nunca se descarta, se guarda como "suelto" para poder
-              // mostrarla igual, ubicada en su día si se conoce.
               looseDays.push({ dayKey: key || null, modalidad, aula });
             }
           });
@@ -1542,13 +1990,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           return;
         }
 
-        // Antes, si ya había otra comisión de la misma materia en el horario, se
-        // la sacaba automáticamente para "reemplazarla". Eso era justamente lo
-        // que hacía que a veces desaparecieran materias del planificador sin que
-        // el usuario lo pidiera (sobre todo con el bug de subjectId repetido
-        // entre categorías). Ahora cada comisión que se agrega queda en el
-        // planificador de forma independiente: si el usuario quiere sacar otra
-        // comisión, lo hace a mano con "Quitar".
         const conflicts = findConflicts(timeBlocks, key);
 
         if (conflicts.length > 0) {
@@ -1624,10 +2065,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         }
       }
 
-      // Orden por horario: día de la semana (lunes -> domingo) y luego hora de
-      // inicio más temprana. Las materias sin horario horario fijo pero con día
-      // conocido quedan después de las que sí tienen horario ese mismo día; las
-      // que no tienen ningún día conocido van al final de todo.
       function earliestSortKey(item) {
         const dIdx = (dk) => {
           const i = CAL_DAY_ORDER.indexOf(dk);
@@ -1644,9 +2081,9 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         }
         const looseWithDay = (item.looseDays || []).find((l) => l.dayKey);
         if (looseWithDay) {
-          return dIdx(looseWithDay.dayKey) * 100000 + 100000; // después de los horarios de ese día
+          return dIdx(looseWithDay.dayKey) * 100000 + 100000;
         }
-        return CAL_DAY_ORDER.length * 100000 + 100000; // sin día: al final de todo
+        return CAL_DAY_ORDER.length * 100000 + 100000;
       }
 
       function getSortedCalendarItems() {
@@ -1655,28 +2092,12 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         );
       }
 
-      /* ---- Layout de bloques por día: apilados desde arriba, en orden
-     cronológico, sin huecos por horas libres ----
-
-     Antes esta función posicionaba cada bloque con un "top" absoluto
-     calculado a partir de CAL_START_HOUR (07:00), así que si la primera
-     clase del día empezaba, por ejemplo, a las 19:00, el rectángulo
-     aparecía "corrido" bien abajo dejando toda esa franja vacía arriba.
-     Ahora se agrupan los bloques que se solapan entre sí (directa o
-     indirectamente) en "componentes conectados", esos grupos se ordenan
-     cronológicamente por su horario de inicio, y se apilan uno debajo del
-     otro empezando desde arriba (top:0), sin dejar hueco por las horas en
-     que no hay nada agendado. Dentro de cada grupo se mantiene la posición
-     relativa proporcional a la duración real (para que se note visualmente
-     cuál bloque es más largo y cómo se solapan entre sí), pero el grupo
-     como conjunto arranca pegado al final del grupo anterior. */
       function layoutDayBlocksPacked(entries) {
         const FIXED_BLOCK_HEIGHT = 140;
         if (entries.length === 0) return { placed: [], totalHeight: 0 };
 
         const n = entries.length;
 
-        // 1) Agrupar en componentes conectados por solapamiento de horario.
         const groupOf = new Array(n).fill(-1);
         let groupCount = 0;
         for (let i = 0; i < n; i++) {
@@ -1706,20 +2127,17 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           groups.push(idxs);
         }
 
-        // 2) Orden cronológico de los grupos (por su inicio más temprano), para
-        // que el apilado quede ordenado según el horario real.
         groups.sort((ga, gb) => {
           const aMin = Math.min(...ga.map((i) => entries[i].block.startMin));
           const bMin = Math.min(...gb.map((i) => entries[i].block.startMin));
           return aMin - bMin;
         });
 
-        const GROUP_GAP = 10; // separación vertical entre grupos consecutivos
+        const GROUP_GAP = 10;
         const placed = new Array(n);
         let runningTop = 0;
 
         groups.forEach((idxs) => {
-          // Orden determinístico dentro del grupo.
           idxs.sort((ia, ib) => {
             const a = entries[ia].block,
               b = entries[ib].block;
@@ -1730,8 +2148,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             );
           });
 
-          // 3) Asignación de columnas (greedy) dentro del grupo, para las
-          // materias que sí se superponen en el mismo horario.
           const columnEnds = [];
           const colOf = new Array(idxs.length);
           idxs.forEach((idx, order) => {
@@ -1746,7 +2162,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             colOf[order] = col;
           });
 
-          // Total de columnas real del grupo (barrido de tiempo / sweep line).
           const events = [];
           idxs.forEach((idx) => {
             const b = entries[idx].block;
@@ -1762,16 +2177,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           });
           const totalCols = Math.max(maxConcurrent, columnEnds.length, 1);
 
-          // 4) Alto del grupo = duración real del tramo que cubre (desde el
-          // inicio más temprano hasta el fin más tardío dentro del grupo), para
-          // conservar la proporción visual de duración sin dejar huecos con los
-          // demás grupos del día.
-          const groupMinStart = Math.min(
-            ...idxs.map((i) => entries[i].block.startMin),
-          );
-          const groupMaxEnd = Math.max(
-            ...idxs.map((i) => entries[i].block.endMin),
-          );
           const groupHeight = FIXED_BLOCK_HEIGHT;
 
           idxs.forEach((idx, order) => {
@@ -1805,10 +2210,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         const withSchedule = sortedItems.filter(
           (i) => (i.blocks || []).length > 0,
         );
-        // "Sin horario pero con día conocido" -> se muestran como chip dentro de esa
-        // columna del día, arriba de la grilla horaria.
         const looseWithDay = [];
-        // "Sin horario y sin día conocido" -> van en la sección aparte, debajo.
         const looseWithoutDay = [];
 
         sortedItems.forEach((item) => {
@@ -1816,8 +2218,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             if (ld.dayKey) looseWithDay.push({ item, loose: ld });
             else looseWithoutDay.push({ item, loose: ld });
           });
-          // Materias que no tienen NINGÚN bloque horario y tampoco looseDays con día
-          // (por ejemplo cargas totalmente vacías) también van a la sección aparte.
           if (
             (item.blocks || []).length === 0 &&
             (item.looseDays || []).length === 0
@@ -1859,15 +2259,10 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             colorIdx++;
           }
         });
-        // Salvavidas: si por algún motivo un bloque referencia una materia sin
-        // color asignado, nunca queda con un color inválido (eso era lo que hacía
-        // que apareciera la columna del día pero el rectángulo quedara invisible).
         function colorFor(subjectKeyRef) {
           return colorForSubject[subjectKeyRef] || "#00e5ff";
         }
 
-        // Determinar qué días se muestran: los que tengan bloques horarios O
-        // materias sin horario pero con día conocido.
         const daysWithSchedule = new Set();
         withSchedule.forEach((i) =>
           i.blocks.forEach((b) => daysWithSchedule.add(b.dayKey)),
@@ -1881,7 +2276,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             ? usedDayKeys
             : ["lunes", "martes", "miercoles", "jueves", "viernes"];
 
-        /* ---- Fila superior: materias sin horario fijo pero con día conocido ---- */
         noTimeRow.style.gridTemplateColumns = `repeat(${dayKeys.length}, 1fr)`;
         const anyLooseWithDay = looseWithDay.some(({ loose }) =>
           dayKeys.includes(loose.dayKey),
@@ -1911,8 +2305,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             .join("");
         }
 
-        /* ---- Grilla (ahora apilada desde arriba por día, ordenada por horario;
-       ver layoutDayBlocksPacked) ---- */
         const grid = document.getElementById("calendarGrid");
         grid.style.gridTemplateColumns = `repeat(${dayKeys.length}, 1fr)`;
 
@@ -1921,8 +2313,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           html += `<div class="cal-day-header">${CAL_DAY_LABELS[dk]}</div>`;
         });
 
-        // Se calcula primero el layout de cada día para saber el alto máximo
-        // entre columnas y que todos los días compartan la misma altura de fila.
         const perDayLayout = {};
         let maxColHeight = 140;
         dayKeys.forEach((dk) => {
@@ -1962,11 +2352,9 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
 
         grid.innerHTML = html;
 
-        /* ---- Materias sin ningún día conocido (van aparte, debajo de la grilla) ---- */
         if (looseWithoutDay.length === 0) {
           noScheduleWrap.innerHTML = "";
         } else {
-          // Deduplicar por materia (una materia puede tener más de un "looseDay" sin día)
           const seen = new Set();
           const uniqueChips = [];
           looseWithoutDay.forEach(({ item, loose }) => {
@@ -1991,7 +2379,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         </div>`;
         }
 
-        // Listado textual debajo (ya ordenado por horario), con botón para quitar cada materia
         list.innerHTML = sortedItems
           .map(
             (item) => `
@@ -2013,10 +2400,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         });
       }
 
-      // Convierte un color hex "#rrggbb" a "rgba(r,g,b,a)". Usamos esto en vez de
-      // hex de 8 dígitos ("#rrggbbaa") porque html2canvas (usado para el PDF) no
-      // siempre interpreta bien la transparencia en formato hex de 8 dígitos y
-      // terminaba mostrando los bloques del planificador en blanco.
       function hexToRgba(hex, alpha) {
         const h = String(hex || "#00e5ff").replace("#", "");
         const r = parseInt(h.substring(0, 2), 16) || 0;
@@ -2055,7 +2438,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           if (selectedSubject) syncCalendarButtons();
         });
 
-      /* ---- Descarga del planificador en PDF (fondo blanco, listo para imprimir) ---- */
       document
         .getElementById("calendarPdfBtn")
         .addEventListener("click", () => {
@@ -2070,21 +2452,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         });
 
       function downloadCalendarPdf() {
-        // Clonamos el contenido del planificador y le aplicamos una hoja de estilos
-        // "clara" para que quede prolijo si se imprime en papel. Usamos fuentes del
-        // sistema (no las variables de Google Fonts) y colores explícitos en cada
-        // nodo para que html2canvas no dependa de CSS variables ni de recursos
-        // externos.
-        //
-        // Antes el nodo a exportar se posicionaba con "position: fixed; top:0;
-        // left:0; z-index:-1" dentro de un wrapper con "height:0". Un z-index
-        // negativo crea su propio contexto de apilamiento y queda DETRÁS del
-        // resto de la página (header, paneles, etc.), que sí son opacos. Al
-        // capturar ese nodo, html2canvas terminaba mostrando lo que estaba
-        // pintado encima (el fondo oscuro de la página) en vez del contenido, y
-        // el PDF salía en blanco. Ahora en cambio lo sacamos por completo del
-        // área visible corriéndolo miles de píxeles a la izquierda, sin usar
-        // z-index: así nunca hay otro elemento superpuesto por encima.
         const source = document.createElement("div");
         source.className = "pdf-export-root";
 
@@ -2294,12 +2661,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
 
       /* ==================== FIN ARCHIVOS ==================== */
 
-      /* ==================== LINKS (solo lectura para el usuario) ====================
-     Los links ya NO se agregan desde la interfaz. Se cargan de forma
-     "read-only" desde un archivo de texto plano (links.txt) ubicado en la raíz
-     del proyecto, con el mismo formato "Nombre | URL" (uno por línea).
-     Para agregar o quitar links, el administrador del sitio edita ese archivo
-     directamente en el proyecto — el usuario final no tiene forma de tocarlo. */
+      /* ==================== LINKS (solo lectura para el usuario) ==================== */
 
       let linksItems = [];
 
@@ -2466,10 +2828,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
               : Array.isArray(com.horarios)
                 ? com.horarios
                 : [];
-          // Cada "día" puede traer el horario real anidado bajo "schedule" en vez
-          // de tenerlo suelto (startHour/endHour de primer nivel). Se aplana acá
-          // igual que en buildBlocksFromCom para que el texto mostrado coincida
-          // siempre con lo que realmente se detecta para el planificador.
           const flatDayRows = [];
           days.forEach((d) => {
             expandScheduleEntries(d).forEach((sources) => {
@@ -2544,10 +2902,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           </div>`;
           } else {
             const lines = flatDayRows.map((d) => {
-              // Antes, si la modalidad era asincrónica se descartaba el horario y
-              // solo se mostraba el día ("borraba" la hora informada). Ahora se
-              // muestra siempre el horario real si vino informado, sea cual sea
-              // la modalidad; la modalidad se agrega como aclaración aparte.
               let line = `${d.dia} ${d.startHour && d.endHour ? `${d.startHour} - ${d.endHour}` : d.startHour || "-"}`;
               if (d.modalidad) line += ` (${d.modalidad})`;
               if (d.aula) line += ` • ${d.aula}`;
@@ -2677,9 +3031,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       <div class="modal-card">
         <h3 id="commentsModalTitle">Comentarios</h3>
 
-        <!-- Calificación por estrellas (1 a 5), separada de los comentarios de texto.
-         Se guarda en Firebase bajo ratings/{teacherId} (no se mezcla con
-         comments/{teacherId}). -->
         <div class="ratings-block">
           <div class="ratings-summary">
             <span class="ratings-avg" id="ratingsAvg">—</span>
@@ -2782,24 +3133,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       let currentCommentsRef = null;
       let currentRatingsRef = null;
 
-      /* ==================== IP PÚBLICA DEL DISPOSITIVO ====================
-     Se usa como clave del voto en Firebase (ratings/{teacherId}/{ip}) en vez
-     de un fingerprint de navegador. A diferencia de FingerprintJS, esto NO
-     depende de canvas/WebGL/fuentes que Brave randomiza a propósito — la IP
-     pública sale directo de la conexión de red, así que Brave y el modo
-     incógnito no tienen forma de ocultarla o cambiarla por su cuenta.
-
-     Trade-off a tener en cuenta: la IP identifica la RED, no el dispositivo.
-     Dos personas en el mismo wifi (facultad, casa, bar) comparten IP y van a
-     verse como "el mismo votante". Y alguien que quiera votar dos veces solo
-     necesita cambiar de red (wifi -> datos móviles, u obtener IP nueva del
-     router) para esquivar el bloqueo. Sigue siendo mucho más simple y barato
-     que un fingerprint o un login, y cubre el caso normal de "la misma
-     persona vota dos veces seguidas desde el mismo lugar".
-
-     Se usa api.ipify.org (gratuito, sin API key, habilita CORS). Si por
-     algún motivo no responde (sin conexión, servicio caído), se cae a un ID
-     local persistido en localStorage como último recurso. */
       let deviceFingerprintPromise = null;
 
       function localFallbackId() {
@@ -2816,15 +3149,10 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           }
           return id;
         } catch (e) {
-          // Si ni siquiera localStorage está disponible, se genera un id de sesión
-          // (no persiste entre recargas, es el último recurso).
           return "fb_session_" + Math.random().toString(36).slice(2, 10);
         }
       }
 
-      // Firebase Realtime Database no permite ".", "#", "$", "/", "[", "]" en las
-      // claves de sus nodos, y una IPv4/IPv6 normalmente trae puntos o dos puntos.
-      // Se reemplazan por guiones bajos para poder usar la IP directo como clave.
       function sanitizeKeyPart(s) {
         return String(s || "").replace(/[.#$\[\]\/:]/g, "_");
       }
@@ -2839,17 +3167,12 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             if (data && data.ip) return sanitizeKeyPart(data.ip);
             return localFallbackId();
           } catch (e) {
-            // Sin conexión, servicio caído, o bloqueado por alguna extensión.
             return localFallbackId();
           }
         })();
         return deviceFingerprintPromise;
       }
-      // Se dispara apenas carga el módulo, así la IP ya está resuelta (o
-      // resuelto el fallback) para cuando el usuario abra el modal de
-      // comentarios y quiera votar.
       getDeviceFingerprint();
-      /* ==================== FIN IP PÚBLICA DEL DISPOSITIVO ================== */
 
       window.openCommentsModal = function (teacherId, teacherName) {
         if (!teacherId) teacherId = String(teacherName || "sin-id");
@@ -2894,7 +3217,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           list.scrollTop = list.scrollHeight;
         });
 
-        // ---- Calificación por estrellas (separada de los comentarios) ----
         resetStarPicker();
         currentRatingsRef = ref(db, `ratings/${teacherId}`);
         getDeviceFingerprint().then((fingerprint) => {
@@ -3005,26 +3327,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         }
       };
 
-      /* ==================== CALIFICACIÓN POR ESTRELLAS (1-5) ====================
-     Se guarda en el nodo "ratings/{teacherId}" de Firebase, separado del nodo
-     "comments/{teacherId}" que usan los comentarios de texto.
-
-     ANTES el bloqueo de "un voto por persona" se controlaba con localStorage
-     (una bandera "ya voté" guardada en el navegador). El problema es que
-     localStorage no persiste en una ventana de incógnito: cerrando y abriendo
-     una nueva, la bandera desaparece y se puede volver a votar sin límite.
-
-     AHORA la clave de cada voto en Firebase es la IP pública del
-     dispositivo (ratings/{teacherId}/{ip}), obtenida de un servicio externo
-     gratuito (ver getDeviceFingerprint más arriba). Al usar `set()` (en vez
-     de `push()`) sobre esa clave fija, un voto nuevo desde la misma IP
-     SOBRESCRIBE el voto anterior en el mismo nodo en vez de sumarse como una
-     entrada nueva — el promedio sigue contando un solo voto por IP. Como
-     respaldo, si no se puede obtener la IP (sin conexión, servicio caído),
-     se usa un ID local persistido en localStorage; en ese caso el control
-     vuelve a depender del navegador, igual que antes. Nota: la IP identifica
-     la red, no la persona — dos usuarios en el mismo wifi comparten IP (ver
-     comentario completo junto a getDeviceFingerprint). */
       let currentMyStars = null;
       function renderRatingsSummary(sum, count) {
         const avgEl = document.getElementById("ratingsAvg");
@@ -3066,10 +3368,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         });
       }
 
-      // Aplica el estado del picker según lo que YA votó este dispositivo
-      // (myStars viene del listener de Firebase, buscando la clave que coincide
-      // con el fingerprint actual). myStars === null significa que este
-      // dispositivo todavía no votó a este docente.
       function applyOwnVoteState(myStars) {
         currentMyStars = myStars;
         const hint = document.getElementById("ratingsVoteHint");
@@ -3094,20 +3392,17 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
 
         try {
           const fingerprint = await getDeviceFingerprint();
-          // set() sobre una clave fija (el fingerprint) en vez de push(): un voto
-          // nuevo del mismo dispositivo actualiza el existente en lugar de sumar
-          // una entrada nueva al promedio.
           const myRatingRef = ref(
             db,
             `ratings/${currentTeacherId}/${fingerprint}`,
           );
           if (stars === currentMyStars) {
-            await set(myRatingRef, null); // Enviar null elimina el nodo en Firebase
+            await set(myRatingRef, null);
             if (hint) hint.textContent = "Tu calificación fue eliminada.";
             currentMyStars = null;
-            highlightStars(0); // Apaga todas las estrellas visualmente
+            highlightStars(0);
             if (typeof window.sndSuccess === "function") window.sndSuccess();
-            return; // Corta la ejecución para que no vuelva a votar
+            return;
           }
           await set(myRatingRef, { stars, date: Date.now() });
           if (hint)
@@ -3127,8 +3422,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           submitRating(parseInt(btn.dataset.star, 10)),
         );
       });
-
-      /* ==================== FIN CALIFICACIÓN POR ESTRELLAS ==================== */
 
       function escapeHtmlLocal(s) {
         return String(s || "")

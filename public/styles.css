@@ -1755,3 +1755,69 @@ footer {
   .consulta-nav-row .btn-modal { flex: 1; }
 
 }
+/* ==================== NUEVO: PANTALLA "¿QUÉ PLAN TENÉS?" ==================== */
+.consulta-plan-choice {
+  overflow-y: auto;
+}
+.consulta-plan-choice .consulta-q-card {
+  margin-bottom: 20px;
+}
+.consulta-plan-choice .consulta-answer-row {
+  margin-bottom: 0;
+}
+/* Reutiliza .consulta-answer-btn (yes/no) para los botones de plan, pero acá
+   "yes" = Plan Nuevo y "no" = Plan Viejo, así que les damos textos más largos
+   sin que se corte el botón. */
+.consulta-plan-choice .consulta-answer-btn {
+  padding: 18px 16px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* ==================== NUEVO: BLOQUES POR AÑO / CUATRIMESTRE ==================== */
+.consulta-bloque {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  background: rgba(255,255,255,0.015);
+}
+.consulta-bloque:last-child { margin-bottom: 0; }
+
+.consulta-bloque-titulo {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  background: linear-gradient(120deg, rgba(0,229,255,0.08), rgba(11,18,32,0.2));
+  border-bottom: 1px solid var(--line);
+  padding: 10px 16px;
+}
+
+.consulta-bloque-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+/* Dentro de un bloque, los items ya no necesitan su propio margen extra */
+.consulta-bloque .consulta-habilitada-item {
+  margin: 0;
+}
+
+/* El bloque de "sin equivalencia" del Plan Viejo se distingue con un acento
+   naranja en vez de verde, para diferenciarlo visualmente de los bloques
+   normales de año/cuatrimestre. */
+.consulta-bloque:has(.consulta-bloque-titulo:only-child) {}
+.consulta-bloque-titulo[data-variant="warn"] {
+  color: #ff9f43;
+  background: linear-gradient(120deg, rgba(255,159,67,0.09), rgba(11,18,32,0.2));
+}
+
+@media (max-width: 640px) {
+  .consulta-plan-choice .consulta-answer-row { flex-direction: column; }
+  .consulta-bloque-titulo { font-size: 0.75rem; padding: 9px 12px; }
+  .consulta-bloque-items { padding: 12px; gap: 8px; }
+}
