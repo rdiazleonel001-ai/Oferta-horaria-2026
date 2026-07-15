@@ -1543,11 +1543,15 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
                 items: [],
               });
             }
+            const reqs = CONSULTA_PLAN[c][1];
+            const reqsTxt = reqs.length
+              ? "Requiere: " + reqs.map((r) => consultaNombre(r)).join(" · ")
+              : "Sin correlativas previas";
             grupos.get(clave).items.push(
               itemHabilitadaHtml(
                 info.codigo,
                 info.nombre,
-                `Equivalente a ${CONSULTA_PLAN[c][0]} (Plan Nuevo)`,
+                `${reqsTxt} · Equivalente a ${CONSULTA_PLAN[c][0]} (Plan Nuevo)`,
               ),
             );
           });
