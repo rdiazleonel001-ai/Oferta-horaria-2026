@@ -776,21 +776,23 @@ footer {
   padding: 2px;
   transition: color .12s, transform .12s;
 }
-.star-btn:hover:not(:disabled),
-.star-btn:hover:not(:disabled) ~ .star-btn {
-  color: var(--line);
-}
-.star-picker:hover .star-btn:not(:disabled):hover,
-.star-picker .star-btn:not(:disabled):hover {
-  transform: scale(1.12);
-}
-/* Efecto "iluminar hacia la izquierda" al pasar el mouse */
-.star-picker:not(:has(.star-btn:disabled)) .star-btn:hover ~ .star-btn {
-  color: var(--line);
-}
-.star-picker .star-btn:not(:disabled):hover,
-.star-picker .star-btn:not(:disabled):hover ~ .star-btn:not(:disabled) {
-  color: var(--line);
+/* Después */
+@media (hover: hover) and (pointer: fine) {
+  .star-btn:hover:not(:disabled),
+  .star-btn:hover:not(:disabled) ~ .star-btn {
+    color: var(--line);
+  }
+  .star-picker:hover .star-btn:not(:disabled):hover,
+  .star-picker .star-btn:not(:disabled):hover {
+    transform: scale(1.12);
+  }
+  .star-picker:not(:has(.star-btn:disabled)) .star-btn:hover ~ .star-btn {
+    color: var(--line);
+  }
+  .star-picker .star-btn:not(:disabled):hover,
+  .star-picker .star-btn:not(:disabled):hover ~ .star-btn:not(:disabled) {
+    color: var(--line);
+  }
 }
 .star-btn.picked {
   color: var(--gold);
