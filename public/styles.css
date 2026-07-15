@@ -1818,3 +1818,33 @@ footer {
   .consulta-bloque-titulo { font-size: 0.75rem; padding: 9px 12px; }
   .consulta-bloque-items { padding: 12px; gap: 8px; }
 }
+
+.consulta-result {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.consulta-result::-webkit-scrollbar { width: 8px; }
+.consulta-result::-webkit-scrollbar-track { background: transparent; }
+.consulta-result::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+.consulta-result::-webkit-scrollbar-thumb:hover {
+  background: var(--cyan);
+}
+
+.consulta-intro,
+.consulta-plan-choice {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.consulta-intro::-webkit-scrollbar,
+.consulta-plan-choice::-webkit-scrollbar { width: 8px; }
+.consulta-intro::-webkit-scrollbar-track,
+.consulta-plan-choice::-webkit-scrollbar-track { background: transparent; }
+.consulta-intro::-webkit-scrollbar-thumb,
+.consulta-plan-choice::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+
