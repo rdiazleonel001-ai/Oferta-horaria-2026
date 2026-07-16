@@ -11,6 +11,45 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <style>
+      .consulta-intermedio-box {
+        margin: 14px 0;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .consulta-intermedio-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+      }
+      .consulta-equiv-box {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        margin: 10px 0;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .consulta-equiv-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+      }
+      .consulta-equiv-chip {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        font-size: 0.82rem;
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -327,6 +366,18 @@
             <div id="consultaQReqs" class="consulta-q-reqs"></div>
           </div>
 
+          <div
+            id="consultaEquivBox"
+            class="consulta-equiv-box"
+            style="display: none"
+          >
+            <span class="consulta-equiv-icon">⇄</span>
+            <div>
+              <b>Equivalencia con el plan anterior (2014)</b>
+              <div id="consultaEquivList" class="consulta-equiv-list"></div>
+            </div>
+          </div>
+
           <div class="consulta-answer-row">
             <button class="consulta-answer-btn no" id="consultaNoBtn">
               No la aprobé
@@ -361,6 +412,25 @@
               <span class="consulta-result-tag">podés cursar ahora</span>
             </div>
           </div>
+
+          <div class="consulta-intermedio-box">
+            <div class="consulta-intermedio-head">
+              <b>Título Intermedio</b>
+              <span id="consultaIntermedioPct">0%</span>
+            </div>
+            <div class="consulta-progress-bar">
+              <div
+                class="consulta-progress-fill"
+                id="consultaIntermedioFill"
+              ></div>
+            </div>
+            <span
+              class="consulta-progress-label"
+              id="consultaIntermedioLabel"
+              >0 / 28 materias</span
+            >
+          </div>
+
           <div class="consulta-result-label" id="consultaResultPlanLabel">
             Materias que podés cursar ahora:
           </div>
@@ -1357,11 +1427,30 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       // (con sus propios códigos y correlativas), sin traducir nada.
       // ---------------------------------------------------------------
 
+      // Materias que cuentan para el Título Intermedio, según cada plan.
+      // Plan 2022: las marcadas "Requisito para Título Intermedio" en el
+      // temario + Inglés (49). Son 28 en total.
+      const TITULO_INTERMEDIO_2022 = [
+        "01", "02", "03", "04", "05", "06", "07", "08", "09",
+        "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
+        "22", "23", "24", "26", "27", "28", "29", "31", "49",
+      ];
+
+      // Plan 2014: todas las materias de 1°, 2° y 3° año + Inglés (IG001).
+      // Son 28 en total.
+      const TITULO_INTERMEDIO_2014 = [
+        "CI021", "CI003", "CI009", "CI002", "CI001", "CI010", "CI004", "CI012",
+        "CI022", "I3001", "I3002", "I3003", "CI025", "CI026", "I3004", "I3005",
+        "I3006", "CI027", "I3007", "I3008", "I3009", "I3010", "CI029", "I3011",
+        "CI011", "I3012", "I3013", "IG001",
+      ];
+
       const CONSULTA_ADAPTERS = {
         nuevo: {
           label: "Plan Nuevo (2022)",
           tag: "Plan 2022 — Ingeniería en Informática",
           order: CONSULTA_ORDER,
+          intermedio: TITULO_INTERMEDIO_2022,
           nombre(codigo) {
             return `${codigo} - ${CONSULTA_PLAN[codigo][0]}`;
           },
@@ -1376,6 +1465,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           label: "Plan Viejo (2014)",
           tag: "Plan 2014 — Ingeniería en Informática",
           order: PLAN2014_MATERIAS.map((m) => m.codigo),
+          intermedio: TITULO_INTERMEDIO_2014,
           nombre(codigo) {
             const m = PLAN2014_MATERIAS.find((x) => x.codigo === codigo);
             return `${codigo} - ${m ? m.nombre : "?"}`;
@@ -1518,6 +1608,25 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         document.getElementById("consultaQReqs").textContent =
           consultaReqsTexto(codigo);
 
+        // La equivalencia con el plan 2014 solo aplica cuando el usuario
+        // está respondiendo en modo Plan Nuevo (2022).
+        const equivBox = document.getElementById("consultaEquivBox");
+        const equivList = document.getElementById("consultaEquivList");
+        const equivalencia =
+          consultaPlanElegido === "nuevo" ? CONSULTA_EQUIVALENCIAS[codigo] : null;
+        if (equivalencia && equivalencia.length > 0) {
+          equivBox.style.display = "flex";
+          equivList.innerHTML = equivalencia
+            .map(
+              (e) =>
+                `<span class="consulta-equiv-chip">${escapeHtml(e)}</span>`,
+            )
+            .join("");
+        } else {
+          equivBox.style.display = "none";
+          equivList.innerHTML = "";
+        }
+
         document.getElementById("consultaBackBtn").disabled =
           consultaState.history.length === 0;
       }
@@ -1566,6 +1675,24 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           aprobadas.size;
         document.getElementById("consultaHabilitadasCount").textContent =
           habilitadas.length;
+
+        // % de Título Intermedio: aprobadas / 28 materias que cuentan para
+        // el intermedio en el plan elegido (fijo por plan, no cambia).
+        const listaIntermedio = consultaAdapter.intermedio;
+        const totalIntermedio = listaIntermedio.length;
+        const aprobadasIntermedio = listaIntermedio.filter((c) =>
+          aprobadas.has(c),
+        ).length;
+        const pctIntermedio =
+          totalIntermedio === 0
+            ? 0
+            : Math.round((aprobadasIntermedio / totalIntermedio) * 100);
+        document.getElementById("consultaIntermedioPct").textContent =
+          `${pctIntermedio}%`;
+        document.getElementById("consultaIntermedioFill").style.width =
+          `${pctIntermedio}%`;
+        document.getElementById("consultaIntermedioLabel").textContent =
+          `${aprobadasIntermedio} / ${totalIntermedio} materias`;
 
         const planLabel = document.getElementById("consultaResultPlanLabel");
         planLabel.textContent =
