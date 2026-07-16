@@ -1641,11 +1641,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
               ? "Requiere: " + reqs.map((r) => consultaNombre(r)).join(" · ")
               : "Sin correlativas previas";
             grupos.get(clave).items.push(
-              itemHabilitadaHtml(
-                info.codigo,
-                info.nombre,
-                `${reqsTxt} · Equivalente a ${CONSULTA_PLAN[c][0]} (Plan Nuevo)`,
-              ),
+              itemHabilitadaHtml(info.codigo, info.nombre, reqsTxt),
             );
           });
         });
