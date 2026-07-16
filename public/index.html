@@ -1738,11 +1738,17 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       // por año y cuatrimestre, usando la ubicación real de cada materia en
       // ESE plan (nunca traduce a otro plan).
       function renderHabilitadasPorBloques(habilitadas) {
-        const grupos = new Map(); // clave "anio-cuat" -> { titulo, items: [] }
+        const grupos = new Map(); // clave -> { titulo, items: [] }
 
         habilitadas.forEach((c) => {
           const ubic = consultaAdapter.ubicacion(c);
-          const clave = `${ubic.anio}-${ubic.cuat}`;
+          // Cuando anio es 0 (Inglés, Optativas, etc.) agrupamos por
+          // etiqueta, no por "0-0", para no mezclar Inglés (Extracurricular)
+          // con las Materias Optativas en un mismo bloque.
+          const clave =
+            ubic.anio === 0
+              ? `0-${ubic.etiqueta || "Otras"}`
+              : `${ubic.anio}-${ubic.cuat}`;
           if (!grupos.has(clave)) {
             let titulo;
             if (ubic.anio === 0) {
@@ -1750,7 +1756,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             } else {
               titulo = `${ubic.anio}° Año — ${NOMBRES_CUAT[ubic.cuat] || ""}`;
             }
-            grupos.set(clave, { titulo, orden: ubic.anio * 10 + ubic.cuat, items: [] });
+            grupos.set(clave, { titulo, orden: ubic.anio === 0 ? 999 : ubic.anio * 10 + ubic.cuat, items: [] });
           }
           const reqsTxt = consultaReqsTexto(c);
           grupos.get(clave).items.push(
