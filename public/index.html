@@ -49,6 +49,42 @@
         background: rgba(255, 255, 255, 0.08);
         font-size: 0.82rem;
       }
+      .consulta-intermedio-faltan-btn {
+        margin-top: 10px;
+        width: 100%;
+      }
+      .consulta-intermedio-faltan-box {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        max-height: 220px;
+        overflow-y: auto;
+      }
+      .consulta-intermedio-faltan-empty {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        text-align: center;
+        padding: 6px 0;
+      }
+      .consulta-intermedio-faltan-item {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        padding: 4px 0;
+        font-size: 0.85rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .consulta-intermedio-faltan-item:last-child {
+        border-bottom: none;
+      }
+      .consulta-intermedio-faltan-code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.78rem;
+        opacity: 0.75;
+        white-space: nowrap;
+      }
     </style>
   </head>
   <body>
@@ -429,6 +465,18 @@
               id="consultaIntermedioLabel"
               >0 / 28 materias</span
             >
+            <button
+              class="btn-modal cancel consulta-intermedio-faltan-btn"
+              id="consultaIntermedioFaltanBtn"
+              type="button"
+            >
+              Ver materias que me faltan aprobar
+            </button>
+            <div
+              id="consultaIntermedioFaltanBox"
+              class="consulta-intermedio-faltan-box"
+              style="display: none"
+            ></div>
           </div>
 
           <div class="consulta-result-label" id="consultaResultPlanLabel">
@@ -1490,6 +1538,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         askedIndex: -1,
       };
       let consultaHabilitadasActuales = [];
+      let consultaIntermedioFaltantesActuales = [];
 
       function consultaNombre(codigo) {
         return consultaAdapter.nombre(codigo);
@@ -1691,6 +1740,16 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         document.getElementById("consultaIntermedioLabel").textContent =
           `${aprobadasIntermedio} / ${totalIntermedio} materias`;
 
+        consultaIntermedioFaltantesActuales = listaIntermedio.filter(
+          (c) => !aprobadas.has(c),
+        );
+        // Si la caja de faltantes ya estaba abierta, la refrescamos con los
+        // nuevos datos; si no, la dejamos cerrada como estaba.
+        const faltanBox = document.getElementById("consultaIntermedioFaltanBox");
+        if (faltanBox && faltanBox.style.display !== "none") {
+          renderIntermedioFaltantes();
+        }
+
         const planLabel = document.getElementById("consultaResultPlanLabel");
         planLabel.textContent =
           consultaPlanElegido === "viejo"
@@ -1719,6 +1778,46 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         <div class="consulta-bloque-items">${itemsHtml}</div>
       </div>`;
       }
+
+      function renderIntermedioFaltantes() {
+        const box = document.getElementById("consultaIntermedioFaltanBox");
+        if (!box) return;
+        const faltantes = consultaIntermedioFaltantesActuales;
+
+        if (!faltantes || faltantes.length === 0) {
+          box.innerHTML = `<div class="consulta-intermedio-faltan-empty">¡Ya aprobaste todas las materias del Título Intermedio! 🎉</div>`;
+          return;
+        }
+
+        const itemsHtml = faltantes
+          .map(
+            (codigo) => `
+      <div class="consulta-intermedio-faltan-item">
+        <span class="consulta-intermedio-faltan-code">${escapeHtml(codigo)}</span>
+        <span>${escapeHtml(consultaNombre(codigo))}</span>
+      </div>`,
+          )
+          .join("");
+
+        box.innerHTML = itemsHtml;
+      }
+
+      document
+        .getElementById("consultaIntermedioFaltanBtn")
+        .addEventListener("click", () => {
+          const box = document.getElementById("consultaIntermedioFaltanBox");
+          const btn = document.getElementById("consultaIntermedioFaltanBtn");
+          if (!box) return;
+          const isHidden = box.style.display === "none";
+          if (isHidden) {
+            renderIntermedioFaltantes();
+            box.style.display = "block";
+            btn.textContent = "Ocultar materias que me faltan aprobar";
+          } else {
+            box.style.display = "none";
+            btn.textContent = "Ver materias que me faltan aprobar";
+          }
+        });
 
       function itemHabilitadaHtml(codigo, nombre, reqsTxt) {
         return `
