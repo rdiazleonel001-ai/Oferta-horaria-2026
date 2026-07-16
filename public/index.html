@@ -242,8 +242,8 @@
       <div class="modal-card consulta-card">
         <div class="consulta-head">
           <h3>Consulta de Correlativas</h3>
-          <span class="consulta-plan-tag"
-            >Plan 2022 — Ingeniería en Informática</span
+          <span class="consulta-plan-tag" id="consultaPlanTag"
+            >Ingeniería en Informática</span
           >
         </div>
 
@@ -269,8 +269,37 @@
             <button class="btn-modal cancel" id="consultaIntroCloseBtn">
               Cerrar
             </button>
-            <button class="btn-modal confirm" id="consultaStartBtn">
-              Empezar consulta
+            <button class="btn-modal confirm" id="consultaIntroContinueBtn">
+              Continuar
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="consultaPlanChoiceStart"
+          class="consulta-plan-choice"
+          style="display: none"
+        >
+          <div class="consulta-q-card">
+            <span class="consulta-q-eyebrow">Antes de empezar</span>
+            <h4>¿En qué plan de estudios estás inscripto/a?</h4>
+            <p class="consulta-desc">
+              Elegí tu plan para que las preguntas y las correlativas que te
+              muestre sean las de tu plan real, sin traducciones a mitad de
+              camino.
+            </p>
+          </div>
+          <div class="consulta-answer-row">
+            <button class="consulta-answer-btn no" id="consultaPlanViejoStartBtn">
+              Plan Viejo (2014)
+            </button>
+            <button class="consulta-answer-btn yes" id="consultaPlanNuevoStartBtn">
+              Plan Nuevo (2022)
+            </button>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal cancel" id="consultaPlanChoiceStartBackBtn">
+              ← Atrás
             </button>
           </div>
         </div>
@@ -298,18 +327,6 @@
             <div id="consultaQReqs" class="consulta-q-reqs"></div>
           </div>
 
-          <div
-            id="consultaEquivBox"
-            class="consulta-equiv-box"
-            style="display: none"
-          >
-            <span class="consulta-equiv-icon">⇄</span>
-            <div>
-              <b>Equivalencia con el plan anterior (2014)</b>
-              <div id="consultaEquivList" class="consulta-equiv-list"></div>
-            </div>
-          </div>
-
           <div class="consulta-answer-row">
             <button class="consulta-answer-btn no" id="consultaNoBtn">
               No la aprobé
@@ -325,30 +342,6 @@
             </button>
             <button class="btn-modal cancel" id="consultaRestartBtn">
               Reiniciar
-            </button>
-          </div>
-        </div>
-
-        <div
-          id="consultaPlanChoice"
-          class="consulta-plan-choice"
-          style="display: none"
-        >
-          <div class="consulta-q-card">
-            <span class="consulta-q-eyebrow">Antes de mostrarte el resultado</span>
-            <h4>¿En qué plan de estudios estás inscripto/a?</h4>
-            <p class="consulta-desc">
-              Elegí tu plan para que te muestre las materias que podés cursar
-              agrupadas por año y cuatrimestre, con los códigos y nombres
-              correctos de tu plan.
-            </p>
-          </div>
-          <div class="consulta-answer-row">
-            <button class="consulta-answer-btn no" id="consultaPlanViejoBtn">
-              Plan Viejo (2014)
-            </button>
-            <button class="consulta-answer-btn yes" id="consultaPlanNuevoBtn">
-              Plan Nuevo (2022)
             </button>
           </div>
         </div>
@@ -376,9 +369,6 @@
             class="consulta-habilitadas-list"
           ></div>
           <div class="modal-actions">
-            <button class="btn-modal cancel" id="consultaChangePlanBtn">
-              Cambiar plan
-            </button>
             <button class="btn-modal cancel" id="consultaRestartBtn2">
               Volver a empezar
             </button>
@@ -1352,6 +1342,60 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         return found || null;
       }
 
+      // ---------------------------------------------------------------
+      // Motor de consulta plan-agnóstico.
+      //
+      // Antes había un solo recorrido (el del Plan 2022) y, recién al final,
+      // se preguntaba el plan del usuario para traducir las respuestas del
+      // 2022 a sus equivalentes del 2014. Eso rompía cuando una materia del
+      // 2022 equivalía a varias del 2014: el usuario solo podía responder
+      // Sí/No una vez para las 3 juntas, perdiendo la posibilidad de decir
+      // "aprobé 1 de esas 3 pero no las otras 2".
+      //
+      // Ahora el plan se pregunta PRIMERO, y cada plan tiene su propio
+      // "adapter" que sabe recorrer y preguntar sus propias materias reales
+      // (con sus propios códigos y correlativas), sin traducir nada.
+      // ---------------------------------------------------------------
+
+      const CONSULTA_ADAPTERS = {
+        nuevo: {
+          label: "Plan Nuevo (2022)",
+          tag: "Plan 2022 — Ingeniería en Informática",
+          order: CONSULTA_ORDER,
+          nombre(codigo) {
+            return `${codigo} - ${CONSULTA_PLAN[codigo][0]}`;
+          },
+          reqs(codigo) {
+            return CONSULTA_PLAN[codigo][1];
+          },
+          ubicacion(codigo) {
+            return PLAN2022_UBICACION[codigo] || { anio: 0, cuat: 0 };
+          },
+        },
+        viejo: {
+          label: "Plan Viejo (2014)",
+          tag: "Plan 2014 — Ingeniería en Informática",
+          order: PLAN2014_MATERIAS.map((m) => m.codigo),
+          nombre(codigo) {
+            const m = PLAN2014_MATERIAS.find((x) => x.codigo === codigo);
+            return `${codigo} - ${m ? m.nombre : "?"}`;
+          },
+          reqs(codigo) {
+            const m = PLAN2014_MATERIAS.find((x) => x.codigo === codigo);
+            return m ? m.correlativas : [];
+          },
+          ubicacion(codigo) {
+            const m = PLAN2014_MATERIAS.find((x) => x.codigo === codigo);
+            return m
+              ? { anio: m.anio, cuat: m.cuat, etiqueta: m.etiqueta }
+              : { anio: 0, cuat: 0 };
+          },
+        },
+      };
+
+      let consultaPlanElegido = null; // "nuevo" | "viejo"
+      let consultaAdapter = null;
+
       let consultaState = {
         index: 0,
         aprobadas: new Set(),
@@ -1361,11 +1405,11 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       let consultaHabilitadasActuales = [];
 
       function consultaNombre(codigo) {
-        return `${codigo} - ${CONSULTA_PLAN[codigo][0]}`;
+        return consultaAdapter.nombre(codigo);
       }
 
       function consultaCorrelativasCumplidas(codigo, aprobadas) {
-        const reqs = CONSULTA_PLAN[codigo][1];
+        const reqs = consultaAdapter.reqs(codigo);
         return reqs.every((r) => aprobadas.has(r));
       }
 
@@ -1373,15 +1417,16 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       // (correlativas cumplidas con el set de aprobadas dado). Devuelve -1 si no
       // queda ninguno (fin del plan), igual que el "continue" del script en Python.
       function consultaFindNextAskable(startIdx, aprobadas) {
-        for (let i = startIdx; i < CONSULTA_ORDER.length; i++) {
-          const codigo = CONSULTA_ORDER[i];
+        const order = consultaAdapter.order;
+        for (let i = startIdx; i < order.length; i++) {
+          const codigo = order[i];
           if (consultaCorrelativasCumplidas(codigo, aprobadas)) return i;
         }
         return -1;
       }
 
       function consultaReqsTexto(codigo) {
-        const reqs = CONSULTA_PLAN[codigo][1];
+        const reqs = consultaAdapter.reqs(codigo);
         if (reqs.length === 0) return "Sin correlativas previas";
         return "Requiere: " + reqs.map((r) => consultaNombre(r)).join(" · ");
       }
@@ -1389,14 +1434,27 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       function consultaOpenModal() {
         document.getElementById("consultaModal").style.display = "flex";
         sndTick();
+        consultaPlanElegido = null;
+        consultaAdapter = null;
+        document.getElementById("consultaPlanTag").textContent =
+          "Ingeniería en Informática";
         consultaShowIntro();
       }
 
       function consultaShowIntro() {
         document.getElementById("consultaIntro").style.display = "block";
+        document.getElementById("consultaPlanChoiceStart").style.display = "none";
         document.getElementById("consultaQuestion").style.display = "none";
-        document.getElementById("consultaPlanChoice").style.display = "none";
         document.getElementById("consultaResult").style.display = "none";
+      }
+
+      // Paso intermedio: preguntar el plan ANTES de empezar con las materias.
+      function consultaShowPlanChoiceStart() {
+        document.getElementById("consultaIntro").style.display = "none";
+        document.getElementById("consultaQuestion").style.display = "none";
+        document.getElementById("consultaResult").style.display = "none";
+        document.getElementById("consultaPlanChoiceStart").style.display = "block";
+        sndTick();
       }
 
       function consultaReset() {
@@ -1409,13 +1467,28 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         consultaHabilitadasActuales = [];
       }
 
-      function consultaStart() {
+      // Se llama al elegir el plan: fija el adapter correspondiente y recién
+      // ahí arranca el cuestionario, ya con el recorrido correcto.
+      function consultaStart(plan) {
+        consultaPlanElegido = plan;
+        consultaAdapter = CONSULTA_ADAPTERS[plan];
+        document.getElementById("consultaPlanTag").textContent =
+          consultaAdapter.tag;
+
         consultaReset();
         document.getElementById("consultaIntro").style.display = "none";
-        document.getElementById("consultaPlanChoice").style.display = "none";
+        document.getElementById("consultaPlanChoiceStart").style.display = "none";
         document.getElementById("consultaResult").style.display = "none";
         document.getElementById("consultaQuestion").style.display = "block";
         consultaRenderStep();
+      }
+
+      // Reinicia todo el flujo desde cero (incluida la elección de plan).
+      function consultaRestartFull() {
+        consultaPlanElegido = null;
+        consultaAdapter = null;
+        consultaReset();
+        consultaShowPlanChoiceStart();
       }
 
       function consultaRenderStep() {
@@ -1425,15 +1498,16 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         );
 
         if (idx === -1) {
-          consultaShowPlanChoice();
+          consultaShowResult();
           return;
         }
 
         consultaState.askedIndex = idx;
-        const codigo = CONSULTA_ORDER[idx];
+        const order = consultaAdapter.order;
+        const codigo = order[idx];
 
         // Barra de progreso (aproximada al total de materias del plan)
-        const total = CONSULTA_ORDER.length;
+        const total = order.length;
         const pct = Math.round((idx / total) * 100);
         document.getElementById("consultaProgressFill").style.width = `${pct}%`;
         document.getElementById("consultaProgressLabel").textContent =
@@ -1443,22 +1517,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           consultaNombre(codigo);
         document.getElementById("consultaQReqs").textContent =
           consultaReqsTexto(codigo);
-
-        const equivBox = document.getElementById("consultaEquivBox");
-        const equivList = document.getElementById("consultaEquivList");
-        const equivalencia = CONSULTA_EQUIVALENCIAS[codigo];
-        if (equivalencia && equivalencia.length > 0) {
-          equivBox.style.display = "flex";
-          equivList.innerHTML = equivalencia
-            .map(
-              (e) =>
-                `<span class="consulta-equiv-chip">${escapeHtml(e)}</span>`,
-            )
-            .join("");
-        } else {
-          equivBox.style.display = "none";
-          equivList.innerHTML = "";
-        }
 
         document.getElementById("consultaBackBtn").disabled =
           consultaState.history.length === 0;
@@ -1474,7 +1532,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         });
 
         if (aprobo) {
-          consultaState.aprobadas.add(CONSULTA_ORDER[idx]);
+          consultaState.aprobadas.add(consultaAdapter.order[idx]);
           sndSuccess();
         } else {
           sndTick();
@@ -1493,23 +1551,12 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         consultaRenderStep();
       }
 
-      // Al terminar de preguntar todas las materias (con sus equivalencias ya
-      // mostradas pregunta a pregunta), antes de calcular y mostrar qué se puede
-      // cursar, preguntamos en qué plan está el usuario.
-      function consultaShowPlanChoice() {
-        document.getElementById("consultaQuestion").style.display = "none";
-        document.getElementById("consultaResult").style.display = "none";
-        document.getElementById("consultaPlanChoice").style.display = "block";
-        sndTick();
-      }
-
-      function consultaShowResult(plan) {
-        document.getElementById("consultaPlanChoice").style.display = "none";
+      function consultaShowResult() {
         document.getElementById("consultaQuestion").style.display = "none";
         document.getElementById("consultaResult").style.display = "block";
 
         const aprobadas = consultaState.aprobadas;
-        const habilitadas = CONSULTA_ORDER.filter(
+        const habilitadas = consultaAdapter.order.filter(
           (c) =>
             !aprobadas.has(c) && consultaCorrelativasCumplidas(c, aprobadas),
         );
@@ -1522,7 +1569,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
 
         const planLabel = document.getElementById("consultaResultPlanLabel");
         planLabel.textContent =
-          plan === "viejo"
+          consultaPlanElegido === "viejo"
             ? "Materias que podés cursar ahora (Plan Viejo 2014):"
             : "Materias que podés cursar ahora (Plan Nuevo 2022):";
 
@@ -1534,11 +1581,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           return;
         }
 
-        if (plan === "viejo") {
-          list.innerHTML = renderHabilitadasPorBloquesViejo(habilitadas);
-        } else {
-          list.innerHTML = renderHabilitadasPorBloquesNuevo(habilitadas);
-        }
+        list.innerHTML = renderHabilitadasPorBloques(habilitadas);
         sndSuccess();
       }
 
@@ -1564,13 +1607,14 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       </div>`;
       }
 
-      // Agrupa las materias habilitadas (códigos del Plan 2022) en bloques por
-      // año y cuatrimestre, usando la ubicación real de cada materia en el plan.
-      function renderHabilitadasPorBloquesNuevo(habilitadas) {
+      // Agrupa las materias habilitadas (códigos del plan elegido) en bloques
+      // por año y cuatrimestre, usando la ubicación real de cada materia en
+      // ESE plan (nunca traduce a otro plan).
+      function renderHabilitadasPorBloques(habilitadas) {
         const grupos = new Map(); // clave "anio-cuat" -> { titulo, items: [] }
 
         habilitadas.forEach((c) => {
-          const ubic = PLAN2022_UBICACION[c] || { anio: 0, cuat: 0 };
+          const ubic = consultaAdapter.ubicacion(c);
           const clave = `${ubic.anio}-${ubic.cuat}`;
           if (!grupos.has(clave)) {
             let titulo;
@@ -1581,12 +1625,9 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             }
             grupos.set(clave, { titulo, orden: ubic.anio * 10 + ubic.cuat, items: [] });
           }
-          const reqs = CONSULTA_PLAN[c][1];
-          const reqsTxt = reqs.length
-            ? reqs.map((r) => consultaNombre(r)).join(" · ")
-            : "sin correlativas";
+          const reqsTxt = consultaReqsTexto(c);
           grupos.get(clave).items.push(
-            itemHabilitadaHtml(c, CONSULTA_PLAN[c][0], reqsTxt),
+            itemHabilitadaHtml(c, consultaAdapter.nombre(c).split(" - ").slice(1).join(" - "), reqsTxt),
           );
         });
 
@@ -1596,71 +1637,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         return ordenados
           .map((g) => bloqueHtml(g.titulo, g.items.join("")))
           .join("");
-      }
-
-      // Traduce las materias habilitadas (códigos del Plan 2022) a sus
-      // equivalentes del Plan Viejo (2014) y las agrupa por año/cuatrimestre
-      // del plan viejo. Las que no tienen equivalencia cargada se listan aparte.
-      function renderHabilitadasPorBloquesViejo(habilitadas) {
-        const grupos = new Map();
-        const sinEquivalencia = [];
-        const vistas = new Set(); // evita duplicar si dos códigos 2022 comparten equivalencia
-
-        habilitadas.forEach((c) => {
-          const equivs = CONSULTA_EQUIVALENCIAS[c];
-          if (!equivs || equivs.length === 0) {
-            sinEquivalencia.push({ codigo: c, nombre: CONSULTA_PLAN[c][0] });
-            return;
-          }
-          equivs.forEach((nombreEquiv) => {
-            const info = buscarPlan2014PorNombre(nombreEquiv);
-            const claveVista = info ? info.codigo : normalizeText(nombreEquiv);
-            if (vistas.has(claveVista)) return;
-            vistas.add(claveVista);
-
-            if (!info) {
-              sinEquivalencia.push({ codigo: "—", nombre: nombreEquiv });
-              return;
-            }
-            const clave = `${info.anio}-${info.cuat}`;
-            if (!grupos.has(clave)) {
-              let titulo;
-              if (info.anio === 0) {
-                titulo = info.etiqueta || "Otras";
-              } else {
-                titulo = `${info.anio}° Año — ${NOMBRES_CUAT[info.cuat] || ""}`;
-              }
-              grupos.set(clave, {
-                titulo,
-                orden: info.anio * 10 + info.cuat,
-                items: [],
-              });
-            }
-            const reqs = CONSULTA_PLAN[c][1];
-            const reqsTxt = reqs.length
-              ? "Requiere: " + reqs.map((r) => consultaNombre(r)).join(" · ")
-              : "Sin correlativas previas";
-            grupos.get(clave).items.push(
-              itemHabilitadaHtml(info.codigo, info.nombre, reqsTxt),
-            );
-          });
-        });
-
-        const ordenados = Array.from(grupos.values()).sort(
-          (a, b) => a.orden - b.orden,
-        );
-        let html = ordenados
-          .map((g) => bloqueHtml(g.titulo, g.items.join("")))
-          .join("");
-
-        if (sinEquivalencia.length > 0) {
-          const items = sinEquivalencia
-            .map((s) => itemHabilitadaHtml(s.codigo, s.nombre, "Sin equivalencia cargada en el Plan Viejo"))
-            .join("");
-          html += bloqueHtml("Sin equivalencia clara en el Plan Viejo", items, "warn");
-        }
-
-        return html;
       }
 
       function consultaCloseModal() {
@@ -1674,8 +1650,17 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         .getElementById("consultaIntroCloseBtn")
         .addEventListener("click", consultaCloseModal);
       document
-        .getElementById("consultaStartBtn")
-        .addEventListener("click", consultaStart);
+        .getElementById("consultaIntroContinueBtn")
+        .addEventListener("click", consultaShowPlanChoiceStart);
+      document
+        .getElementById("consultaPlanChoiceStartBackBtn")
+        .addEventListener("click", consultaShowIntro);
+      document
+        .getElementById("consultaPlanNuevoStartBtn")
+        .addEventListener("click", () => consultaStart("nuevo"));
+      document
+        .getElementById("consultaPlanViejoStartBtn")
+        .addEventListener("click", () => consultaStart("viejo"));
       document
         .getElementById("consultaYesBtn")
         .addEventListener("click", () => consultaAnswer(true));
@@ -1687,22 +1672,13 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         .addEventListener("click", consultaGoBack);
       document
         .getElementById("consultaRestartBtn")
-        .addEventListener("click", consultaStart);
+        .addEventListener("click", consultaRestartFull);
       document
         .getElementById("consultaRestartBtn2")
-        .addEventListener("click", consultaStart);
+        .addEventListener("click", consultaRestartFull);
       document
         .getElementById("consultaResultCloseBtn")
         .addEventListener("click", consultaCloseModal);
-      document
-        .getElementById("consultaPlanNuevoBtn")
-        .addEventListener("click", () => consultaShowResult("nuevo"));
-      document
-        .getElementById("consultaPlanViejoBtn")
-        .addEventListener("click", () => consultaShowResult("viejo"));
-      document
-        .getElementById("consultaChangePlanBtn")
-        .addEventListener("click", () => consultaShowPlanChoice());
       document
         .getElementById("consultaModal")
         .addEventListener("click", (e) => {
