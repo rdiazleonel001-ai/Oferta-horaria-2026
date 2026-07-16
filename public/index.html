@@ -1274,7 +1274,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           cuat: 2,
           correlativas: ["I3004"],
         },
-        { codigo: "I3031", nombre: "Optativa I", anio: 4, cuat: 2, correlativas: [] },
         {
           codigo: "CI030",
           nombre: "Ingeniería Ambiental",
@@ -1596,7 +1595,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
 
         // Barra de progreso (aproximada al total de materias del plan)
         const total = order.length;
-        const pct = Math.round((idx / total) * 100);
+        const pct = (idx / total) * 100;
         document.getElementById("consultaProgressFill").style.width = `${pct}%`;
         document.getElementById("consultaProgressLabel").textContent =
           `Materia ${idx + 1} / ${total}`;
