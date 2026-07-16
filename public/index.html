@@ -1595,7 +1595,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
 
         // Barra de progreso (aproximada al total de materias del plan)
         const total = order.length;
-        const pct = (idx / total) * 100;
+        const pct = Math.round((idx / total) * 100);
         document.getElementById("consultaProgressFill").style.width = `${pct}%`;
         document.getElementById("consultaProgressLabel").textContent =
           `Materia ${idx + 1} / ${total}`;
@@ -1683,9 +1683,9 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         const pctIntermedio =
           totalIntermedio === 0
             ? 0
-            : Math.round((aprobadasIntermedio / totalIntermedio) * 100);
+            : (aprobadasIntermedio / totalIntermedio) * 100;
         document.getElementById("consultaIntermedioPct").textContent =
-          `${pctIntermedio}%`;
+          `${pctIntermedio.toFixed(2)}%`;
         document.getElementById("consultaIntermedioFill").style.width =
           `${pctIntermedio}%`;
         document.getElementById("consultaIntermedioLabel").textContent =
