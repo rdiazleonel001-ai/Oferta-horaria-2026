@@ -87,25 +87,23 @@
       }
 
       /* Botón flotante "volver arriba" dentro de la lista de materias */
-      .sidebar-body {
-        position: relative;
-      }
       .scroll-top-btn {
-        position: absolute;
-        right: 14px;
-        bottom: 14px;
-        width: 38px;
-        height: 38px;
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        width: 40px;
+        height: 40px;
         border-radius: 999px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(30, 30, 34, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.18);
         backdrop-filter: blur(6px);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
         color: #fff;
         cursor: pointer;
-        z-index: 20;
+        z-index: 500;
         opacity: 0;
         visibility: hidden;
         transform: translateY(6px);
@@ -117,7 +115,7 @@
         transform: translateY(0);
       }
       .scroll-top-btn:hover {
-        background: rgba(255, 255, 255, 0.18);
+        background: rgba(50, 50, 56, 0.9);
       }
       .scroll-top-btn svg {
         width: 18px;
@@ -793,21 +791,47 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
 
       /* ---------------- BOTÓN "VOLVER ARRIBA" DE LA LISTA ---------------- */
       // Aparece cuando el usuario bajó bastante buscando una materia, y al
-      // tocarlo hace scroll suave de vuelta hasta el buscador.
+      // tocarlo vuelve hasta el buscador con scroll suave.
+      //
+      // No sabemos de antemano si lo que scrollea es la página entera
+      // (document/window) o el div #materiaList internamente (depende de
+      // estilos externos en styles.css que no controlamos acá), así que
+      // escuchamos "scroll" en fase de CAPTURA sobre window: los eventos de
+      // scroll no hacen bubbling, pero si el listener está en captura sí
+      // los intercepta vengan de donde vengan (documento o cualquier div
+      // con scroll interno).
       (function initScrollTopButton() {
-        const list = document.getElementById("materiaList");
         const btn = document.getElementById("scrollTopBtn");
-        if (!list || !btn) return;
+        const searchInput = document.getElementById("searchInput");
+        if (!btn || !searchInput) return;
 
         const SHOW_AFTER_PX = 160;
 
-        list.addEventListener("scroll", () => {
-          btn.classList.toggle("visible", list.scrollTop > SHOW_AFTER_PX);
-        });
+        function currentScrollTop(target) {
+          if (target === document || target === window) {
+            return window.scrollY || document.documentElement.scrollTop || 0;
+          }
+          return target.scrollTop || 0;
+        }
+
+        window.addEventListener(
+          "scroll",
+          (e) => {
+            const top = currentScrollTop(e.target);
+            btn.classList.toggle("visible", top > SHOW_AFTER_PX);
+          },
+          { capture: true, passive: true },
+        );
 
         btn.addEventListener("click", () => {
-          list.scrollTo({ top: 0, behavior: "smooth" });
-          document.getElementById("searchInput").focus();
+          // Cubre ambos casos posibles: si scrollea la página, esto la
+          // sube; si scrollea el div interno, esto sube el div. Hacer las
+          // dos no rompe nada (la que no aplica es un no-op).
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          const list = document.getElementById("materiaList");
+          if (list) list.scrollTo({ top: 0, behavior: "smooth" });
+          searchInput.scrollIntoView({ behavior: "smooth", block: "start" });
+          searchInput.focus();
           sndTick();
         });
       })();
