@@ -85,6 +85,44 @@
         opacity: 0.75;
         white-space: nowrap;
       }
+
+      /* Botón flotante "volver arriba" dentro de la lista de materias */
+      .sidebar-body {
+        position: relative;
+      }
+      .scroll-top-btn {
+        position: absolute;
+        right: 14px;
+        bottom: 14px;
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(6px);
+        color: #fff;
+        cursor: pointer;
+        z-index: 20;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(6px);
+        transition: opacity 0.18s ease, transform 0.18s ease, background 0.15s ease;
+      }
+      .scroll-top-btn.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      .scroll-top-btn:hover {
+        background: rgba(255, 255, 255, 0.18);
+      }
+      .scroll-top-btn svg {
+        width: 18px;
+        height: 18px;
+      }
     </style>
   </head>
   <body>
@@ -199,6 +237,17 @@
           <div id="materiaList" class="materia-list">
             <div class="empty-hint">Cargando catálogo...</div>
           </div>
+          <button
+            id="scrollTopBtn"
+            class="scroll-top-btn"
+            type="button"
+            title="Volver arriba"
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M6 11L12 5L18 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -741,6 +790,27 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       document
         .getElementById("searchInput")
         .addEventListener("input", () => renderList());
+
+      /* ---------------- BOTÓN "VOLVER ARRIBA" DE LA LISTA ---------------- */
+      // Aparece cuando el usuario bajó bastante buscando una materia, y al
+      // tocarlo hace scroll suave de vuelta hasta el buscador.
+      (function initScrollTopButton() {
+        const list = document.getElementById("materiaList");
+        const btn = document.getElementById("scrollTopBtn");
+        if (!list || !btn) return;
+
+        const SHOW_AFTER_PX = 160;
+
+        list.addEventListener("scroll", () => {
+          btn.classList.toggle("visible", list.scrollTop > SHOW_AFTER_PX);
+        });
+
+        btn.addEventListener("click", () => {
+          list.scrollTo({ top: 0, behavior: "smooth" });
+          document.getElementById("searchInput").focus();
+          sndTick();
+        });
+      })();
 
       /* ---------------- SELECCIÓN DE MATERIA -> HORARIOS ---------------- */
       async function selectSubject(subject, el) {
