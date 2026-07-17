@@ -783,6 +783,10 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           CAREER_IDS[currentCat] ||
           null;
 
+        // academicPeriodId: valor "de relleno". El backend (/api/horarios)
+        // lo detecta solo contra la página oficial y lo pisa antes de
+        // reenviar, así que este número ya no hace falta actualizarlo
+        // a mano nunca más.
         const payload = [
           {
             instituteId: instituteId,
@@ -1531,10 +1535,10 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       let consultaAdapter = null;
 
       let consultaState = {
-        index: 0,
+        remaining: [], // códigos aún no preguntados, en el orden del plan
         aprobadas: new Set(),
-        history: [], // { askedIndex, prevAprobadasArray }
-        askedIndex: -1,
+        history: [], // { codigo, prevAprobadasArray, prevRemainingArray }
+        askedCodigo: null,
       };
       let consultaHabilitadasActuales = [];
       let consultaIntermedioFaltantesActuales = [];
@@ -1548,16 +1552,20 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         return reqs.every((r) => aprobadas.has(r));
       }
 
-      // Busca, desde startIdx en adelante, el próximo código que se pueda preguntar
-      // (correlativas cumplidas con el set de aprobadas dado). Devuelve -1 si no
-      // queda ninguno (fin del plan), igual que el "continue" del script en Python.
-      function consultaFindNextAskable(startIdx, aprobadas) {
-        const order = consultaAdapter.order;
-        for (let i = startIdx; i < order.length; i++) {
-          const codigo = order[i];
-          if (consultaCorrelativasCumplidas(codigo, aprobadas)) return i;
+      // Busca, entre los códigos AÚN PENDIENTES, el primero que ya se pueda
+      // preguntar (correlativas cumplidas con el set de aprobadas dado).
+      // OJO: recorre "remaining" completo desde el principio en cada llamada
+      // (no un índice que solo avanza) — así una materia que se saltea porque
+      // le falta una correlativa que figura MÁS ADELANTE en el plan (p. ej.
+      // "43: Inglés Aplicado a la Ingeniería I" necesita "49: Inglés", que
+      // está después en la lista) se vuelve a evaluar en cada vuelta y no
+      // queda perdida para siempre. Devuelve null si ninguna pendiente es
+      // preguntable todavía.
+      function consultaFindNextAskable(remaining, aprobadas) {
+        for (const codigo of remaining) {
+          if (consultaCorrelativasCumplidas(codigo, aprobadas)) return codigo;
         }
-        return -1;
+        return null;
       }
 
       function consultaReqsTexto(codigo) {
@@ -1594,10 +1602,10 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
 
       function consultaReset() {
         consultaState = {
-          index: 0,
+          remaining: consultaAdapter ? [...consultaAdapter.order] : [],
           aprobadas: new Set(),
           history: [],
-          askedIndex: -1,
+          askedCodigo: null,
         };
         consultaHabilitadasActuales = [];
       }
@@ -1627,26 +1635,25 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       }
 
       function consultaRenderStep() {
-        const idx = consultaFindNextAskable(
-          consultaState.index,
+        const codigo = consultaFindNextAskable(
+          consultaState.remaining,
           consultaState.aprobadas,
         );
 
-        if (idx === -1) {
+        if (codigo === null) {
           consultaShowResult();
           return;
         }
 
-        consultaState.askedIndex = idx;
-        const order = consultaAdapter.order;
-        const codigo = order[idx];
+        consultaState.askedCodigo = codigo;
+        const total = consultaAdapter.order.length;
+        const done = total - consultaState.remaining.length;
 
         // Barra de progreso (aproximada al total de materias del plan)
-        const total = order.length;
-        const pct = Math.round((idx / total) * 100);
+        const pct = Math.round((done / total) * 100);
         document.getElementById("consultaProgressFill").style.width = `${pct}%`;
         document.getElementById("consultaProgressLabel").textContent =
-          `Materia ${idx + 1} / ${total}`;
+          `Materia ${done + 1} / ${total}`;
 
         document.getElementById("consultaQTitle").textContent =
           consultaNombre(codigo);
@@ -1677,22 +1684,25 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       }
 
       function consultaAnswer(aprobo) {
-        const idx = consultaState.askedIndex;
-        if (idx === -1) return;
+        const codigo = consultaState.askedCodigo;
+        if (codigo === null) return;
 
         consultaState.history.push({
-          askedIndex: idx,
+          codigo,
           prevAprobadasArray: Array.from(consultaState.aprobadas),
+          prevRemainingArray: [...consultaState.remaining],
         });
 
         if (aprobo) {
-          consultaState.aprobadas.add(consultaAdapter.order[idx]);
+          consultaState.aprobadas.add(codigo);
           sndSuccess();
         } else {
           sndTick();
         }
 
-        consultaState.index = idx + 1;
+        consultaState.remaining = consultaState.remaining.filter(
+          (c) => c !== codigo,
+        );
         consultaRenderStep();
       }
 
@@ -1700,7 +1710,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         if (consultaState.history.length === 0) return;
         const entry = consultaState.history.pop();
         consultaState.aprobadas = new Set(entry.prevAprobadasArray);
-        consultaState.index = entry.askedIndex;
+        consultaState.remaining = entry.prevRemainingArray;
         sndTick();
         consultaRenderStep();
       }

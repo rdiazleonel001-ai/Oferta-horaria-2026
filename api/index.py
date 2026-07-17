@@ -31,6 +31,72 @@ app.add_middleware(
 
 DEFAULT_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
+# ---------------- DETECCIÓN AUTOMÁTICA DEL PERÍODO ACADÉMICO ----------------
+# En vez de hardcodear academicPeriodId (5, 6, 11...) y tener que ir
+# cambiándolo a mano cada vez que la UNAJ pasa de período, lo detectamos
+# pegándole a la propia página oficial (sin fijar período) y buscando qué
+# academicPeriodId aparece en su respuesta. Se cachea un rato para no
+# pegarle a la página oficial en cada request de un usuario.
+PERIOD_CACHE_TTL_SECONDS = 60 * 60  # 1 hora
+_period_cache: dict[str, Any] = {"value": None, "ts": 0.0}
+
+
+async def _detect_current_period() -> Optional[int]:
+    """
+    Pega contra la página oficial sin fijar academicPeriodId y junta todas
+    las apariciones de "academicPeriodId": N en la respuesta. Asumimos que
+    el período vigente es el más alto (los IDs son incrementales), ya que
+    la propia página arma sus componentes/props con el período activo.
+    """
+    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+        try:
+            resp = await client.get(
+                "https://oferta-academica.espacios.unaj.edu.ar/",
+                headers={"Accept": "text/x-component",
+                         "RSC": "1", **DEFAULT_HEADERS},
+            )
+            raw = resp.text or ""
+        except Exception as err:
+            print(f"⚠ Error detectando período académico: {err}")
+            return None
+
+    matches = re.findall(r'"?academicPeriodId"?\s*:\s*(\d+)', raw)
+    if not matches:
+        print("⚠ No se encontró academicPeriodId en la página oficial.")
+        return None
+
+    detected = max(int(m) for m in matches)
+    print(f"✓ Período académico detectado: {detected}")
+    return detected
+
+
+async def get_current_period(force_refresh: bool = False) -> int:
+    """
+    Devuelve el academicPeriodId vigente, usando cache en memoria.
+    Si la detección falla, reusa el último valor cacheado (aunque esté
+    vencido) antes de caer a un valor fijo de emergencia.
+    """
+    now = time.time()
+    cached = _period_cache["value"]
+    fresh = cached is not None and (
+        now - _period_cache["ts"]) < PERIOD_CACHE_TTL_SECONDS
+
+    if fresh and not force_refresh:
+        return cached
+
+    detected = await _detect_current_period()
+    if detected is not None:
+        _period_cache["value"] = detected
+        _period_cache["ts"] = now
+        return detected
+
+    if cached is not None:
+        print(f"  → usando valor cacheado desactualizado: {cached}")
+        return cached
+
+    print("  → sin detección ni cache, usando valor de emergencia: 11")
+    return 11
+
 # ---------------- RATE LIMIT DE COMENTARIOS (en memoria) ----------------
 # ADVERTENCIA: esto vive en memoria del proceso. Si corrés varias instancias
 # (varios workers, o en un entorno serverless con múltiples réplicas),
@@ -174,6 +240,7 @@ async def get_materias(carrer_id: str):
     PAGE_SIZE = 10
     MAX_PAGES = 60  # tope de seguridad
     offset = 0
+    period = await get_current_period()
 
     async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
         for _ in range(MAX_PAGES):
@@ -181,7 +248,7 @@ async def get_materias(carrer_id: str):
                 resp = await client.get(
                     "https://oferta-academica.espacios.unaj.edu.ar/",
                     params={
-                        "academicPeriodId": 5,
+                        "academicPeriodId": period,
                         "limit": PAGE_SIZE,
                         "sortField": "name",
                         "sortDirection": "asc",
@@ -248,7 +315,7 @@ async def get_materias(carrer_id: str):
                 params={
                     "carrerId": carrer_id,
                     "Limit": 200,
-                    "AcademicPeriodId": 6,
+                    "AcademicPeriodId": period,
                     "sortField": "name",
                     "sortDirection": "asc",
                 },
@@ -341,6 +408,17 @@ async def get_materias(carrer_id: str):
 async def get_horarios(request: Request):
     try:
         payload = await request.json()
+
+        # Pisamos el academicPeriodId que venga del frontend con el
+        # detectado automáticamente, así el HTML nunca necesita saber
+        # cuál es el período vigente ni hace falta tocarlo a mano.
+        period = await get_current_period()
+        if isinstance(payload, list):
+            for item in payload:
+                if isinstance(item, dict):
+                    item["academicPeriodId"] = period
+        elif isinstance(payload, dict):
+            payload["academicPeriodId"] = period
 
         # IMPORTANTE: mantené este hash actualizado si la web original lo cambia
         NEXT_ACTION = "4089e22bca8943bcf018b9b5d8177263d5f601e6dd"
@@ -437,6 +515,19 @@ async def check_comment_rate_limit(request: Request):
 
     _last_comment_by_ip[ip] = now
     return {"allowed": True}
+
+
+# ==================== RUTA: PERÍODO ACADÉMICO ====================
+
+@app.get("/api/period")
+async def get_period(refresh: bool = False):
+    """
+    Devuelve el academicPeriodId que el backend está usando actualmente.
+    Pasar ?refresh=true fuerza volver a detectarlo contra la página oficial
+    (ignorando el cache) — útil para chequear a mano si cambió.
+    """
+    period = await get_current_period(force_refresh=refresh)
+    return {"academicPeriodId": period, "cachedAt": _period_cache["ts"]}
 
 
 # ==================== RUTA: TEST ====================
