@@ -1414,9 +1414,9 @@ footer {
 
   .modal-card.pdf-preview-card {
     width: 100vw;
-    height: 94vh;
+    height: 90vh;
     max-width: 100vw;
-    max-height: 94vh;
+    max-height: 90vh;
     border-radius: 0;
   }
 
