@@ -102,14 +102,17 @@
       .pdf-preview-canvas-box {
         display: flex;
         justify-content: center;
+        align-items: flex-start;
         padding: 8px 0 16px;
         max-height: 70vh;
         overflow: auto;
-        touch-action: pinch-zoom pan-x pan-y;
       }
       .pdf-preview-canvas-box canvas {
-        max-width: none;
+        display: block;
+        flex-shrink: 0;
+        width: auto;
         height: auto;
+        max-width: none;
         box-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
         border-radius: 4px;
       }
