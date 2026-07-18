@@ -86,6 +86,39 @@
         white-space: nowrap;
       }
 
+      .pdf-preview-status {
+        text-align: center;
+        padding: 24px 12px;
+        opacity: 0.8;
+        font-size: 0.9rem;
+      }
+      .pdf-preview-canvas-box {
+        display: flex;
+        justify-content: center;
+        padding: 8px 0 16px;
+      }
+      .pdf-preview-canvas-box canvas {
+        max-width: 100%;
+        height: auto;
+        box-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+        border-radius: 4px;
+      }
+      .pdf-preview-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 8px 0;
+      }
+      .pdf-page-indicator {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.85rem;
+        opacity: 0.85;
+        min-width: 64px;
+        text-align: center;
+      }
+
       /* Botón flotante "volver arriba" dentro de la lista de materias */
       .scroll-top-btn {
         position: fixed;
@@ -345,12 +378,26 @@
             >Descargar</a
           >
         </div>
-        <div class="pdf-preview-frame-wrap">
-          <iframe
-            id="pdfPreviewFrame"
-            class="pdf-preview-frame"
-            title="Vista previa de PDF"
-          ></iframe>
+        <div class="pdf-preview-frame-wrap" id="pdfPreviewFrameWrap">
+          <div id="pdfPreviewStatus" class="pdf-preview-status">
+            Cargando PDF...
+          </div>
+          <div id="pdfPreviewCanvasBox" class="pdf-preview-canvas-box"></div>
+        </div>
+        <div class="pdf-preview-controls" id="pdfPreviewControls" style="display: none">
+          <button class="btn-modal cancel" id="pdfPrevPageBtn" type="button">
+            ‹ Anterior
+          </button>
+          <span id="pdfPageIndicator" class="pdf-page-indicator">1 / 1</span>
+          <button class="btn-modal cancel" id="pdfNextPageBtn" type="button">
+            Siguiente ›
+          </button>
+          <button class="btn-modal cancel" id="pdfZoomOutBtn" type="button" title="Alejar">
+            −
+          </button>
+          <button class="btn-modal cancel" id="pdfZoomInBtn" type="button" title="Acercar">
+            +
+          </button>
         </div>
         <div class="modal-actions">
           <button class="btn-modal cancel" id="pdfPreviewCloseBtn">
@@ -545,6 +592,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
       const BASE_URL = "";
 
@@ -3061,30 +3109,139 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         });
       }
 
-      function openPdfPreview(file) {
+      /* ---- Visor de PDF con PDF.js (sin salir de la página) ---- */
+      if (window["pdfjsLib"]) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      }
+
+      let pdfDoc = null;
+      let pdfCurrentPage = 1;
+      let pdfScale = 1.2;
+      let pdfRenderTaskInProgress = null;
+
+      async function openPdfPreview(file) {
         document.getElementById("pdfPreviewTitle").textContent = file.name;
-        document.getElementById("pdfPreviewFrame").src = file.url;
         const dl = document.getElementById("pdfPreviewDownload");
         dl.href = file.url;
         dl.setAttribute("download", file.name);
+
         document.getElementById("pdfPreviewModal").style.display = "flex";
         document.getElementById("archivosModal").style.display = "none";
         sndSelect();
+
+        await loadPdfIntoViewer(file.url);
+      }
+
+      async function loadPdfIntoViewer(url) {
+        const status = document.getElementById("pdfPreviewStatus");
+        const canvasBox = document.getElementById("pdfPreviewCanvasBox");
+        const controls = document.getElementById("pdfPreviewControls");
+
+        pdfDoc = null;
+        pdfCurrentPage = 1;
+        pdfScale = 1.2;
+        canvasBox.innerHTML = "";
+        controls.style.display = "none";
+        status.style.display = "block";
+        status.textContent = "Cargando PDF...";
+
+        if (!window["pdfjsLib"]) {
+          status.textContent =
+            "No se pudo cargar el visor de PDF. Usá el botón Descargar.";
+          return;
+        }
+
+        try {
+          const loadingTask = pdfjsLib.getDocument(url);
+          pdfDoc = await loadingTask.promise;
+          status.style.display = "none";
+          controls.style.display = "flex";
+          renderPdfPage(pdfCurrentPage);
+        } catch (err) {
+          status.style.display = "block";
+          status.textContent =
+            "No se pudo mostrar la vista previa. Usá el botón Descargar.";
+        }
+      }
+
+      async function renderPdfPage(num) {
+        if (!pdfDoc) return;
+        const canvasBox = document.getElementById("pdfPreviewCanvasBox");
+        const page = await pdfDoc.getPage(num);
+        const viewport = page.getViewport({ scale: pdfScale });
+
+        let canvas = canvasBox.querySelector("canvas");
+        if (!canvas) {
+          canvas = document.createElement("canvas");
+          canvasBox.appendChild(canvas);
+        }
+        const ctx = canvas.getContext("2d");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        if (pdfRenderTaskInProgress) {
+          try {
+            pdfRenderTaskInProgress.cancel();
+          } catch (e) {}
+        }
+        pdfRenderTaskInProgress = page.render({
+          canvasContext: ctx,
+          viewport,
+        });
+        try {
+          await pdfRenderTaskInProgress.promise;
+        } catch (e) {
+          /* render cancelado por cambio de página/zoom, ignorar */
+        }
+
+        document.getElementById("pdfPageIndicator").textContent =
+          `${num} / ${pdfDoc.numPages}`;
+      }
+
+      function closePdfPreview() {
+        document.getElementById("pdfPreviewModal").style.display = "none";
+        document.getElementById("pdfPreviewCanvasBox").innerHTML = "";
+        document.getElementById("pdfPreviewControls").style.display = "none";
+        pdfDoc = null;
       }
 
       document
-        .getElementById("pdfPreviewCloseBtn")
+        .getElementById("pdfPrevPageBtn")
         .addEventListener("click", () => {
-          document.getElementById("pdfPreviewModal").style.display = "none";
-          document.getElementById("pdfPreviewFrame").src = "";
+          if (!pdfDoc || pdfCurrentPage <= 1) return;
+          pdfCurrentPage -= 1;
+          renderPdfPage(pdfCurrentPage);
         });
+      document
+        .getElementById("pdfNextPageBtn")
+        .addEventListener("click", () => {
+          if (!pdfDoc || pdfCurrentPage >= pdfDoc.numPages) return;
+          pdfCurrentPage += 1;
+          renderPdfPage(pdfCurrentPage);
+        });
+      document
+        .getElementById("pdfZoomInBtn")
+        .addEventListener("click", () => {
+          if (!pdfDoc) return;
+          pdfScale = Math.min(3, pdfScale + 0.2);
+          renderPdfPage(pdfCurrentPage);
+        });
+      document
+        .getElementById("pdfZoomOutBtn")
+        .addEventListener("click", () => {
+          if (!pdfDoc) return;
+          pdfScale = Math.max(0.4, pdfScale - 0.2);
+          renderPdfPage(pdfCurrentPage);
+        });
+
+      document
+        .getElementById("pdfPreviewCloseBtn")
+        .addEventListener("click", closePdfPreview);
       document
         .getElementById("pdfPreviewModal")
         .addEventListener("click", (e) => {
-          if (e.target.id === "pdfPreviewModal") {
-            document.getElementById("pdfPreviewModal").style.display = "none";
-            document.getElementById("pdfPreviewFrame").src = "";
-          }
+          if (e.target.id === "pdfPreviewModal") closePdfPreview();
         });
 
       /* ==================== FIN ARCHIVOS ==================== */
