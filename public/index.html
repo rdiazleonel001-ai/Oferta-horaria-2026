@@ -3138,7 +3138,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
 
       let pdfDoc = null;
       let pdfCurrentPage = 1;
-      const pdfScale = 2;
       let pdfRenderTaskInProgress = null;
 
       async function openPdfPreview(file) {
@@ -3200,7 +3199,18 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         if (!pdfDoc) return;
         const canvasBox = document.getElementById("pdfPreviewCanvasBox");
         const page = await pdfDoc.getPage(num);
-        const viewport = page.getViewport({ scale: pdfScale });
+
+        // Ajustamos la escala para que la página entre justo en el ancho
+        // disponible (fit-to-width). El zoom posterior lo hace el usuario
+        // con el pellizco nativo del navegador.
+        const unscaledViewport = page.getViewport({ scale: 1 });
+        const containerWidth =
+          canvasBox.clientWidth || window.innerWidth - 32;
+        const fitScale = containerWidth / unscaledViewport.width;
+        const viewport = page.getViewport({ scale: fitScale });
+
+        // Usamos devicePixelRatio para que se vea nítido en pantallas retina.
+        const outputScale = window.devicePixelRatio || 1;
 
         let canvas = canvasBox.querySelector("canvas");
         if (!canvas) {
@@ -3208,8 +3218,10 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           canvasBox.appendChild(canvas);
         }
         const ctx = canvas.getContext("2d");
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
 
         if (pdfRenderTaskInProgress) {
           try {
@@ -3219,6 +3231,10 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         pdfRenderTaskInProgress = page.render({
           canvasContext: ctx,
           viewport,
+          transform:
+            outputScale !== 1
+              ? [outputScale, 0, 0, outputScale, 0, 0]
+              : undefined,
         });
         try {
           await pdfRenderTaskInProgress.promise;
