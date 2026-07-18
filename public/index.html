@@ -3203,7 +3203,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         // Ajustamos la escala para que la página entre justo en el ancho
         // disponible (fit-to-width). El zoom posterior lo hace el usuario
         // con el pellizco nativo del navegador.
-        const unscaledViewport = page.getViewport({ scale: 1 });
+        const unscaledViewport = page.getViewport({ scale: 1.1 });
         const containerWidth =
           canvasBox.clientWidth || window.innerWidth - 32;
         const fitScale = containerWidth / unscaledViewport.width;
