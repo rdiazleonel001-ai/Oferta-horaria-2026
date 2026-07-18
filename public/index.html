@@ -2082,6 +2082,31 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         return null;
       }
 
+      const PENDIENTE_ASIGNAR = "Pendiente de asignar";
+
+      // Determina si una comisión ya tiene el aula/edificio confirmados
+      // (assignament.id === 3 o descripción "Asignada"/"Asignado").
+      // Si está en id 1, 2 o la descripción dice "No Asignada" / "Pendiente...",
+      // hay que ocultar el aula/edificio mostrando el mensaje genérico.
+      function isComisionAssigned(com) {
+        const a = (com && (com.assignament || com.asignamiento)) || null;
+        if (!a) return true; // sin info de estado, no ocultamos nada
+        const id = a.id;
+        const desc = String(a.description || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, ""); // saca tildes
+
+        if (id === 3) return true;
+        if (id === 1 || id === 2) return false;
+
+        if (desc.includes("no asignad")) return false;
+        if (desc.includes("pendiente")) return false;
+        if (desc.includes("asignad")) return true;
+
+        return true;
+      }
+
       // Busca en un objeto el primer campo no vacío entre varios nombres posibles
       // (distintas versiones del backend usan distintas convenciones de nombre).
       // Acepta uno o varios objetos "fuente": revisa el primero por completo antes
@@ -2260,6 +2285,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       //   conservan igual para poder mostrarlos como "sin horario fijo" dentro del
       //   día correspondiente.
       function buildBlocksFromCom(com) {
+        const assigned = isComisionAssigned(com);
         const days = Array.isArray(com.days)
           ? com.days
           : Array.isArray(com.schedule)
@@ -2290,10 +2316,13 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
                 "modalidad",
                 "modality",
               ]) || "";
-            const aula =
-              pickField(sources, ["placeName", "aula", "place", "location"]) ||
-              "";
-            const edificio = pickField(sources, ["building", "edificio"]) || "";
+            const aula = assigned
+              ? pickField(sources, ["placeName", "aula", "place", "location"]) ||
+                ""
+              : PENDIENTE_ASIGNAR;
+            const edificio = assigned
+              ? pickField(sources, ["building", "edificio"]) || ""
+              : PENDIENTE_ASIGNAR;
 
             const rawStart = pickField(sources, [
               "startHour",
@@ -3219,6 +3248,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             .filter((t) => t.name);
 
           const primaryTeacher = pickPrimaryTeacher(normalizedTeachers);
+          const comisionAssigned = isComisionAssigned(com);
 
           const days = Array.isArray(com.days)
             ? com.days
@@ -3247,13 +3277,17 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
                     "modalidad",
                     "modality",
                   ]) || "",
-                aula:
-                  pickField(sources, [
-                    "placeName",
-                    "aula",
-                    "place",
-                    "location",
-                  ]) || "",
+                aula: comisionAssigned
+                  ? pickField(sources, [
+                      "placeName",
+                      "aula",
+                      "place",
+                      "location",
+                    ]) || ""
+                  : PENDIENTE_ASIGNAR,
+                edificio: comisionAssigned
+                  ? pickField(sources, ["building", "edificio"]) || ""
+                  : PENDIENTE_ASIGNAR,
                 startHour: pickField(sources, [
                   "startHour",
                   "horaInicio",
