@@ -1057,6 +1057,26 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         );
       }
 
+      function getPrimaryTeacherName(com) {
+        const teachers = Array.isArray(com.teachers) ? com.teachers : [];
+        const normalizedTeachers = teachers
+          .map((t) => {
+            if (typeof t === "string") return { name: t, role: "" };
+            const name = t.teacherFullName || t.fullName || t.name || "";
+            const role =
+              t.teacherRoleName ||
+              t.teacherRoleDescription ||
+              t.role ||
+              t.roleName ||
+              "";
+            return { name, role };
+          })
+          .filter((t) => t.name);
+        const primary =
+          pickPrimaryTeacher(normalizedTeachers) || normalizedTeachers[0] || null;
+        return primary ? primary.name : "";
+      }
+
       function isAsincronica(modalidad) {
         return /asincr/i.test(modalidad || "");
       }
@@ -2523,6 +2543,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           subjectName: subject.name || "Materia",
           comisionName:
             com.commissionName || com.comisionName || com.name || "Comisión",
+          teacherName: getPrimaryTeacherName(com),
           blocks: timeBlocks,
           looseDays,
         });
@@ -2806,6 +2827,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
                   return `<div class="cal-notime-chip" style="border-color:${color}">
             <b style="color:${color}">${escapeHtml(item.subjectName)}</b>
             <span>${escapeHtml(item.comisionName || "")}${loose.modalidad ? " · " + escapeHtml(loose.modalidad) : ""}</span>
+            ${item.teacherName ? `<span>${escapeHtml(item.teacherName)}</span>` : ""}
           </div>`;
                 })
                 .join("")}</div>`;
@@ -2852,6 +2874,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           <div class="cal-block" style="top:${top}px; height:${height}px; left:calc(${leftPct}% + 2px); width:calc(${widthPct}% - 4px); border-color:${color}; background:${hexToRgba(color, 0.13)};">
             <b style="color:${color}">${escapeHtml(item.subjectName)}</b>
             <span>${escapeHtml(item.comisionName)}</span>
+            ${item.teacherName ? `<span>${escapeHtml(item.teacherName)}</span>` : ""}
             <span>${formatMinutes(b.startMin)}–${formatMinutes(b.endMin)}${b.aula ? " · " + escapeHtml(b.aula) : ""}${modalidadTag}</span>
           </div>`;
           });
@@ -2880,6 +2903,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
               <div class="no-schedule-chip" style="border-color:${color}">
                 <b style="color:${color}">${escapeHtml(item.subjectName)}</b>
                 <span>${escapeHtml(item.comisionName || "")}</span>
+                ${item.teacherName ? `<span>${escapeHtml(item.teacherName)}</span>` : ""}
                 ${loose.modalidad ? `<span class="chip-day">${escapeHtml(loose.modalidad)}</span>` : ""}
               </div>`;
             })
@@ -2894,6 +2918,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         <div>
           <b>${escapeHtml(item.subjectName)}</b>
           <span>${escapeHtml(item.comisionName)}</span>
+          ${item.teacherName ? `<span>${escapeHtml(item.teacherName)}</span>` : ""}
         </div>
         <button class="btn-modal cancel cal-remove-btn" data-remove-key="${escapeHtml(item.key)}">Quitar</button>
       </div>
