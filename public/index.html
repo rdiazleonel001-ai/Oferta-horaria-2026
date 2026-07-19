@@ -266,8 +266,8 @@
         </div>
         <div class="sidebar-body">
           <select id="catSelect" class="filter-select">
-            <option value="todas">Todas</option>
-            <option value="info" selected>Informática</option>
+            <option value="todas" selected>Todas</option>
+            <option value="info">Informática</option>
             <option value="basic">Básicas</option>
             <option value="iniciales">Iniciales</option>
             <option value="extra">Extracurricular</option>
@@ -618,7 +618,7 @@
       };
 
       let subjectsByCat = { info: [], basic: [], iniciales: [], extra: [] };
-      let currentCat = "info";
+      let currentCat = "todas";
       let selectedSubject = null;
 
       /* ---------------- ICONOS (SVG inline, sin emojis) ---------------- */
