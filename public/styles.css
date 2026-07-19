@@ -1059,7 +1059,7 @@ footer {
   font-family: Arial, Helvetica, sans-serif !important;
 }
 .pdf-export-root .pdf-export-title {
-  font-size: 22px;
+  font-size: 30px;
   font-weight: 800;
   color: #0b1220;
   margin: 0 0 16px;
@@ -1081,30 +1081,35 @@ footer {
   background: #ffffff;
   border-color: #d6dcea !important;
 }
+.pdf-export-root .cal-notime-chip b { font-size: 17px; }
+.pdf-export-root .cal-notime-chip span { font-size: 15px; }
 .pdf-export-root .cal-day-header {
   background: #f2f5fb;
   border-color: #d6dcea;
   color: #1c2b45;
+  font-size: 18px;
 }
 .pdf-export-root .cal-day-col,
 .pdf-export-root .cal-grid { border-color: #d6dcea; background: #ffffff; }
 .pdf-export-root .cal-hour-line { border-top-color: #e4e9f2; }
-.pdf-export-root .cal-block { color: #0b1220 !important; }
-.pdf-export-root .cal-block b { color: inherit !important; }
+.pdf-export-root .cal-block {
+  color: #0b1220 !important;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.pdf-export-root .cal-block b {
+  color: inherit !important;
+  font-size: 18px;
+}
 .pdf-export-root .no-schedule-label,
-.pdf-export-root .cs-label { color: #0b1220; }
+.pdf-export-root .cs-label { color: #0b1220; font-size: 18px; }
 .pdf-export-root .no-schedule-chip {
   background: #f7f9fc;
   border-color: #d6dcea;
 }
-.pdf-export-root .no-schedule-chip span { color: #5b6b8c; }
-.pdf-export-root .no-schedule-chip .chip-day { color: #0b1220; }
-.pdf-export-root .cal-list-item {
-  background: #f7f9fc;
-  border-color: #d6dcea;
-}
-.pdf-export-root .cal-list-item b { color: #0b1220; }
-.pdf-export-root .cal-list-item span { color: #5b6b8c; }
+.pdf-export-root .no-schedule-chip b { font-size: 18px; }
+.pdf-export-root .no-schedule-chip span { color: #5b6b8c; font-size: 16px; }
+.pdf-export-root .no-schedule-chip .chip-day { color: #0b1220; font-size: 16px; }
 
 /* ---------- ARCHIVOS ---------- */
 .modal-card.archivos-card { max-width: 720px; }
@@ -1226,6 +1231,23 @@ footer {
 }
 
 /* ---------- VISTA PREVIA DE PDF (pantalla casi completa) ---------- */
+.modal-card.pdf-colormode-card {
+  max-width: 420px;
+}
+.pdf-colormode-text {
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+.pdf-colormode-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.pdf-colormode-actions .btn-modal {
+  flex: 1;
+  min-width: 140px;
+}
 .modal-card.pdf-preview-card {
   max-width: 96vw;
   width: 96vw;
@@ -1847,4 +1869,3 @@ footer {
   background: var(--line);
   border-radius: 4px;
 }
-

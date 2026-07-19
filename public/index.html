@@ -355,6 +355,26 @@
       </div>
     </div>
 
+    <div id="pdfColorModeModal" class="modal-overlay">
+      <div class="modal-card pdf-colormode-card">
+        <h3>Descargar PDF</h3>
+        <p class="pdf-colormode-text">¿Cómo querés el PDF?</p>
+        <div class="pdf-colormode-actions">
+          <button class="btn-modal confirm" id="pdfColorModeColorBtn">
+            Color
+          </button>
+          <button class="btn-modal confirm" id="pdfColorModeBwBtn">
+            Blanco y negro
+          </button>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-modal cancel" id="pdfColorModeCancelBtn">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="archivosModal" class="modal-overlay">
       <div class="modal-card archivos-card">
         <h3>Archivos</h3>
@@ -2936,10 +2956,37 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             );
             return;
           }
-          downloadCalendarPdf();
+          document.getElementById("pdfColorModeModal").style.display = "flex";
         });
 
-      function downloadCalendarPdf() {
+      document
+        .getElementById("pdfColorModeColorBtn")
+        .addEventListener("click", () => {
+          document.getElementById("pdfColorModeModal").style.display = "none";
+          downloadCalendarPdf(false);
+        });
+
+      document
+        .getElementById("pdfColorModeBwBtn")
+        .addEventListener("click", () => {
+          document.getElementById("pdfColorModeModal").style.display = "none";
+          downloadCalendarPdf(true);
+        });
+
+      document
+        .getElementById("pdfColorModeCancelBtn")
+        .addEventListener("click", () => {
+          document.getElementById("pdfColorModeModal").style.display = "none";
+        });
+
+      document
+        .getElementById("pdfColorModeModal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "pdfColorModeModal")
+            document.getElementById("pdfColorModeModal").style.display = "none";
+        });
+
+      function downloadCalendarPdf(blackAndWhite) {
         const source = document.createElement("div");
         source.className = "pdf-export-root";
 
@@ -2959,14 +3006,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         if (noScheduleClone.innerHTML.trim())
           source.appendChild(noScheduleClone);
 
-        const listClone = document
-          .getElementById("calendarList")
-          .cloneNode(true);
-        listClone
-          .querySelectorAll(".cal-remove-btn")
-          .forEach((b) => b.remove());
-        source.appendChild(listClone);
-
         const wrapper = document.createElement("div");
         wrapper.style.position = "fixed";
         wrapper.style.top = "0";
@@ -2974,6 +3013,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         wrapper.style.width = "1000px";
         wrapper.style.overflow = "visible";
         wrapper.style.background = "#ffffff";
+        if (blackAndWhite) wrapper.style.filter = "grayscale(1)";
         wrapper.appendChild(source);
         document.body.appendChild(wrapper);
 
