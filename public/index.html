@@ -3013,7 +3013,6 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         wrapper.style.width = "1000px";
         wrapper.style.overflow = "visible";
         wrapper.style.background = "#ffffff";
-        if (blackAndWhite) wrapper.style.filter = "grayscale(1)";
         wrapper.appendChild(source);
         document.body.appendChild(wrapper);
 
@@ -3043,6 +3042,27 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         html2pdf()
           .set(opt)
           .from(source)
+          .toCanvas()
+          .then(function () {
+            if (blackAndWhite) {
+              const canvas = this.prop.canvas;
+              const ctx = canvas.getContext("2d");
+              const imgData = ctx.getImageData(
+                0,
+                0,
+                canvas.width,
+                canvas.height,
+              );
+              const d = imgData.data;
+              for (let i = 0; i < d.length; i += 4) {
+                const gray =
+                  d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+                d[i] = d[i + 1] = d[i + 2] = gray;
+              }
+              ctx.putImageData(imgData, 0, 0);
+            }
+          })
+          .toPdf()
           .save()
           .then(() => {
             document.body.removeChild(wrapper);

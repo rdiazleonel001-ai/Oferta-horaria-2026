@@ -1063,6 +1063,7 @@ footer {
   font-weight: 800;
   color: #0b1220;
   margin: 0 0 16px;
+  text-align: center;
 }
 .pdf-export-root .calendar-grid-wrap {
   border: 1px solid #d6dcea;
