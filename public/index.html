@@ -2813,34 +2813,8 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             : ["lunes", "martes", "miercoles", "jueves", "viernes"];
 
         noTimeRow.style.gridTemplateColumns = `repeat(${dayKeys.length}, 1fr)`;
-        const anyLooseWithDay = looseWithDay.some(({ loose }) =>
-          dayKeys.includes(loose.dayKey),
-        );
-        if (!anyLooseWithDay) {
-          noTimeRow.innerHTML = "";
-          noTimeRow.style.display = "none";
-        } else {
-          noTimeRow.style.display = "grid";
-          noTimeRow.innerHTML = dayKeys
-            .map((dk) => {
-              const chips = looseWithDay.filter(
-                ({ loose }) => loose.dayKey === dk,
-              );
-              if (chips.length === 0)
-                return `<div class="cal-notime-cell"></div>`;
-              return `<div class="cal-notime-cell">${chips
-                .map(({ item, loose }) => {
-                  const color = colorFor(item.subjectKeyRef);
-                  return `<div class="cal-notime-chip" style="border-color:${color}">
-            <b style="color:${color}">${escapeHtml(item.subjectName)}</b>
-            <span>${escapeHtml(item.comisionName || "")}${loose.modalidad ? " · " + escapeHtml(loose.modalidad) : ""}</span>
-            ${item.teacherName ? `<span>${escapeHtml(item.teacherName)}</span>` : ""}
-          </div>`;
-                })
-                .join("")}</div>`;
-            })
-            .join("");
-        }
+        noTimeRow.innerHTML = "";
+        noTimeRow.style.display = "none";
 
         const grid = document.getElementById("calendarGrid");
         grid.style.gridTemplateColumns = `repeat(${dayKeys.length}, 1fr)`;
