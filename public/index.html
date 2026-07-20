@@ -629,15 +629,16 @@
       const BASE_URL = "";
 
       // IDs reales usados por el sitio original para cada categoría
-      const CAREER_IDS = { info: 10, basic: 112, iniciales: 108, extra: 115 };
+      const CAREER_IDS = { info: 10, basic: 112, iniciales: 108, extra: 115, compartidas: 113 };
       const CAT_LABELS = {
-        info: "Informática",
-        basic: "Básicas",
-        iniciales: "Iniciales",
-        extra: "Extracurricular",
-      };
+  info: "Informática",
+  basic: "Básicas",
+  iniciales: "Iniciales",
+  extra: "Extracurricular",
+  compartidas: "Materias Compartidas IIyA",
+};
 
-      let subjectsByCat = { info: [], basic: [], iniciales: [], extra: [] };
+      let subjectsByCat = { info: [], basic: [], iniciales: [], extra: [], compartidas: [] };
       let currentCat = "todas";
       let selectedSubject = null;
 
@@ -773,12 +774,14 @@
   fetch(`${BASE_URL}/api/materias/${CAREER_IDS.basic}`),
   fetch(`${BASE_URL}/api/materias/${CAREER_IDS.iniciales}`),
   fetch(`${BASE_URL}/api/materias/${CAREER_IDS.extra}`),
+  fetch(`${BASE_URL}/api/materias/${CAREER_IDS.compartidas}`),
 ]);
 
-const [dInfo, dBasic, dIniciales, dExtra] = await Promise.all([
-  rInfo.json(), rBasic.json(), rIniciales.json(), rExtra.json(),
+const [dInfo, dBasic, dIniciales, dExtra, dCompartidas] = await Promise.all([
+  rInfo.json(), rBasic.json(), rIniciales.json(), rExtra.json(), rCompartidas.json(),
 ]);
 
+subjectsByCat.compartidas = Array.isArray(dCompartidas) ? dCompartidas : (dCompartidas.items || []);
 subjectsByCat.info = Array.isArray(dInfo) ? dInfo : (dInfo.items || []);
 subjectsByCat.basic = Array.isArray(dBasic) ? dBasic : (dBasic.items || []);
 subjectsByCat.iniciales = Array.isArray(dIniciales) ? dIniciales : (dIniciales.items || []);
@@ -809,6 +812,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         let list;
         if (currentCat === "todas") {
   list = [
+    ...subjectsByCat.compartidas.map(s => ({ ...s, _cat: "compartidas" })),
     ...subjectsByCat.info.map(s => ({ ...s, _cat: "info" })),
     ...subjectsByCat.basic.map(s => ({ ...s, _cat: "basic" })),
     ...subjectsByCat.iniciales.map(s => ({ ...s, _cat: "iniciales" })),
