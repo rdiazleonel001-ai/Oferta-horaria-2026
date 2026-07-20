@@ -3073,49 +3073,59 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             // Reconstruimos el PDF manualmente para forzar que la imagen
             // arranque siempre pegada arriba (margin) en vez de quedar
             // centrada verticalmente, que es lo que hacía html2pdf por defecto.
-            const canvas = this.prop.canvas;
-            const imgData = canvas.toDataURL("image/jpeg", 0.98);
-            const JsPdfCtor = this.prop.pdf.constructor;
-            const margin = 10;
+            // Si algo de esto falla, no rompemos la descarga: seguimos con
+            // el PDF que ya había armado html2pdf por su cuenta.
+            try {
+              const canvas = this.prop.canvas;
+              const imgData = canvas.toDataURL("image/jpeg", 0.98);
+              const JsPdfCtor = this.prop.pdf.constructor;
+              const margin = 10;
 
-            const newPdf = new JsPdfCtor({
-              unit: "mm",
-              format: "a4",
-              orientation: "landscape",
-            });
+              const newPdf = new JsPdfCtor({
+                unit: "mm",
+                format: "a4",
+                orientation: "landscape",
+              });
 
-            const pageWidth = newPdf.internal.pageSize.getWidth();
-            const pageHeight = newPdf.internal.pageSize.getHeight();
-            const imgWidth = pageWidth - margin * 2;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            const usableHeight = pageHeight - margin * 2;
+              const pageWidth = newPdf.internal.pageSize.getWidth();
+              const pageHeight = newPdf.internal.pageSize.getHeight();
+              const imgWidth = pageWidth - margin * 2;
+              const imgHeight = (canvas.height * imgWidth) / canvas.width;
+              const usableHeight = pageHeight - margin * 2;
 
-            let heightLeft = imgHeight;
-            let position = 0;
-            let firstPage = true;
+              let heightLeft = imgHeight;
+              let position = 0;
+              let firstPage = true;
 
-            while (heightLeft > 0) {
-              if (!firstPage) newPdf.addPage();
-              newPdf.addImage(
-                imgData,
-                "JPEG",
-                margin,
-                margin - position,
-                imgWidth,
-                imgHeight,
+              while (heightLeft > 0) {
+                if (!firstPage) newPdf.addPage();
+                newPdf.addImage(
+                  imgData,
+                  "JPEG",
+                  margin,
+                  margin - position,
+                  imgWidth,
+                  imgHeight,
+                );
+                heightLeft -= usableHeight;
+                position += usableHeight;
+                firstPage = false;
+              }
+
+              this.prop.pdf = newPdf;
+            } catch (err) {
+              console.error(
+                "No se pudo reacomodar el PDF arriba, se usa el original:",
+                err,
               );
-              heightLeft -= usableHeight;
-              position += usableHeight;
-              firstPage = false;
             }
-
-            this.prop.pdf = newPdf;
           })
           .save()
           .then(() => {
             document.body.removeChild(wrapper);
           })
-          .catch(() => {
+          .catch((err) => {
+            console.error("Error generando el PDF:", err);
             document.body.removeChild(wrapper);
             showToast("error", "No se pudo generar el PDF.");
           });
