@@ -1095,11 +1095,8 @@ footer {
 .pdf-export-root .cal-hour-line { border-top-color: #e4e9f2; }
 .pdf-export-root .cal-block {
   color: #0b1220 !important;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.4;
-  overflow: visible !important;
-  height: auto !important;
-  min-height: 100%;
 }
 .pdf-export-root .cal-block b {
   color: inherit !important;
