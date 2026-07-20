@@ -2463,8 +2463,8 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             const hasValidRange =
               startMin !== null && endMin !== null && endMin > startMin;
 
-            if (key && hasValidRange) {
-              timeBlocks.push({
+            if (key && hasValidRange && !isAsincronica(modalidad)) {
+                timeBlocks.push({
                 dayKey: key,
                 startMin,
                 endMin,
