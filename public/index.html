@@ -2463,18 +2463,22 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             const hasValidRange =
               startMin !== null && endMin !== null && endMin > startMin;
 
-            if (key && hasValidRange && !isAsincronica(modalidad)) {
-                timeBlocks.push({
-                dayKey: key,
-                startMin,
-                endMin,
-                modalidad,
-                aula,
-                edificio,
-              });
-            } else {
-              looseDays.push({ dayKey: key || null, modalidad, aula });
-            }
+            if (key && hasValidRange) {
+  if (isAsincronica(modalidad)) {
+    looseDays.push({ dayKey: null, modalidad, aula });
+  } else {
+    timeBlocks.push({
+      dayKey: key,
+      startMin,
+      endMin,
+      modalidad,
+      aula,
+      edificio,
+    });
+  }
+} else {
+  looseDays.push({ dayKey: key || null, modalidad, aula });
+}
           });
         });
         return { timeBlocks, looseDays };
