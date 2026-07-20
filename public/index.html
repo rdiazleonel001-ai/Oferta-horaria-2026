@@ -2463,22 +2463,18 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             const hasValidRange =
               startMin !== null && endMin !== null && endMin > startMin;
 
-            if (key && hasValidRange) {
-  if (isAsincronica(modalidad)) {
-    looseDays.push({ dayKey: null, modalidad, aula });
-  } else {
-    timeBlocks.push({
-      dayKey: key,
-      startMin,
-      endMin,
-      modalidad,
-      aula,
-      edificio,
-    });
-  }
-} else {
-  looseDays.push({ dayKey: key || null, modalidad, aula });
-}
+            if (key && hasValidRange && !isAsincronica(modalidad)) {
+                timeBlocks.push({
+                dayKey: key,
+                startMin,
+                endMin,
+                modalidad,
+                aula,
+                edificio,
+              });
+            } else {
+              looseDays.push({ dayKey: key || null, modalidad, aula });
+            }
           });
         });
         return { timeBlocks, looseDays };
@@ -2892,33 +2888,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
 
         grid.innerHTML = html;
 
-        if (looseWithoutDay.length === 0) {
-          noScheduleWrap.innerHTML = "";
-        } else {
-          const seen = new Set();
-          const uniqueChips = [];
-          looseWithoutDay.forEach(({ item, loose }) => {
-            if (seen.has(item.subjectKeyRef)) return;
-            seen.add(item.subjectKeyRef);
-            uniqueChips.push({ item, loose });
-          });
-          noScheduleWrap.innerHTML = `
-        <div class="cs-label no-schedule-label">Sin horario ni día definido</div>
-        <div class="no-schedule-chips">
-          ${uniqueChips
-            .map(({ item, loose }) => {
-              const color = colorFor(item.subjectKeyRef);
-              return `
-              <div class="no-schedule-chip" style="border-color:${color}">
-                <b style="color:${color}">${escapeHtml(item.subjectName)}</b>
-                <span>${escapeHtml(item.comisionName || "")}</span>
-                ${item.teacherName ? `<span>${escapeHtml(item.teacherName)}</span>` : ""}
-                ${loose.modalidad ? `<span class="chip-day">${escapeHtml(loose.modalidad)}</span>` : ""}
-              </div>`;
-            })
-            .join("")}
-        </div>`;
-        }
+        noScheduleWrap.innerHTML = "";
 
         list.innerHTML = sortedItems
           .map(
@@ -3097,6 +3067,48 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             }
           })
           .toPdf()
+          .then(function () {
+            // Reconstruimos el PDF manualmente para forzar que la imagen
+            // arranque siempre pegada arriba (margin) en vez de quedar
+            // centrada verticalmente, que es lo que hacía html2pdf por defecto.
+            const canvas = this.prop.canvas;
+            const imgData = canvas.toDataURL("image/jpeg", 0.98);
+            const JsPdfCtor = this.prop.pdf.constructor;
+            const margin = 10;
+
+            const newPdf = new JsPdfCtor({
+              unit: "mm",
+              format: "a4",
+              orientation: "landscape",
+            });
+
+            const pageWidth = newPdf.internal.pageSize.getWidth();
+            const pageHeight = newPdf.internal.pageSize.getHeight();
+            const imgWidth = pageWidth - margin * 2;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            const usableHeight = pageHeight - margin * 2;
+
+            let heightLeft = imgHeight;
+            let position = 0;
+            let firstPage = true;
+
+            while (heightLeft > 0) {
+              if (!firstPage) newPdf.addPage();
+              newPdf.addImage(
+                imgData,
+                "JPEG",
+                margin,
+                margin - position,
+                imgWidth,
+                imgHeight,
+              );
+              heightLeft -= usableHeight;
+              position += usableHeight;
+              firstPage = false;
+            }
+
+            this.prop.pdf = newPdf;
+          })
           .save()
           .then(() => {
             document.body.removeChild(wrapper);
@@ -3621,12 +3633,14 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             <div class="cs-line cs-muted">Sin días/horarios informados.</div>
           </div>`;
           } else {
-            const lines = flatDayRows.map((d) => {
-              let line = `${d.dia} ${d.startHour && d.endHour ? `${d.startHour} - ${d.endHour}` : d.startHour || "-"}`;
-              if (d.modalidad) line += ` (${d.modalidad})`;
-              if (d.aula) line += ` • ${d.aula}`;
-              return line;
-            });
+            const lines = flatDayRows
+              .filter((d) => !isAsincronica(d.modalidad))
+              .map((d) => {
+                let line = `${d.dia} ${d.startHour && d.endHour ? `${d.startHour} - ${d.endHour}` : d.startHour || "-"}`;
+                if (d.modalidad) line += ` (${d.modalidad})`;
+                if (d.aula) line += ` • ${d.aula}`;
+                return line;
+              });
             const obsSet = Array.from(
               new Set(flatDayRows.map((d) => d.observations).filter(Boolean)),
             );
