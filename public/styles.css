@@ -1097,6 +1097,9 @@ footer {
   color: #0b1220 !important;
   font-size: 16px;
   line-height: 1.4;
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 100%;
 }
 .pdf-export-root .cal-block b {
   color: inherit !important;
