@@ -769,7 +769,7 @@
         statusText.textContent = "Conectando...";
 
         try {
-          const [rInfo, rBasic, rIniciales, rExtra] = await Promise.all([
+          const [rInfo, rBasic, rIniciales, rExtra, rCompartidas] = await Promise.all([
   fetch(`${BASE_URL}/api/materias/${CAREER_IDS.info}`),
   fetch(`${BASE_URL}/api/materias/${CAREER_IDS.basic}`),
   fetch(`${BASE_URL}/api/materias/${CAREER_IDS.iniciales}`),
