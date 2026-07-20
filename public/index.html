@@ -2472,6 +2472,8 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
                 aula,
                 edificio,
               });
+            } else if (key && hasValidRange && isAsincronica(modalidad)) {
+              looseDays.push({ dayKey: null, modalidad, aula });
             } else {
               looseDays.push({ dayKey: key || null, modalidad, aula });
             }
