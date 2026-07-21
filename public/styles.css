@@ -985,7 +985,7 @@ footer {
   flex-direction: column;
   gap: 2px;
   font-family: var(--font-mono);
-  font-size: 0.96rem;
+  font-size: 0.80rem;
   line-height: 1.3;
   color: var(--text);
   
