@@ -11,13 +11,29 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <script>
+      // Aplicamos el tema ANTES de pintar el resto de la página (bloqueante,
+      // en el <head>) para que no se vea un flash del tema oscuro por defecto
+      // y después un salto al tema guardado. Por defecto, si nunca se eligió
+      // nada, queda oscuro (el original).
+      (function () {
+        try {
+          var saved = localStorage.getItem("unaj_theme");
+          if (saved === "light") {
+            document.documentElement.setAttribute("data-theme", "light");
+          }
+        } catch (e) {
+          /* localStorage no disponible: seguimos en oscuro por defecto */
+        }
+      })();
+    </script>
     <style>
       .consulta-intermedio-box {
         margin: 14px 0;
         padding: 12px 14px;
         border-radius: 10px;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--card-bg);
+        border: 1px solid var(--line);
       }
       .consulta-intermedio-head {
         display: flex;
@@ -33,8 +49,8 @@
         margin: 10px 0;
         padding: 10px 12px;
         border-radius: 10px;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--card-bg);
+        border: 1px solid var(--line);
       }
       .consulta-equiv-list {
         display: flex;
@@ -46,8 +62,11 @@
         display: inline-block;
         padding: 3px 8px;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(0,229,255,0.08);
         font-size: 0.82rem;
+      }
+      html[data-theme="light"] .consulta-equiv-chip {
+        background: rgba(0,180,210,0.12);
       }
       .consulta-intermedio-faltan-btn {
         margin-top: 10px;
@@ -57,8 +76,8 @@
         margin-top: 10px;
         padding: 10px 12px;
         border-radius: 10px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--card-bg);
+        border: 1px solid var(--line);
         max-height: 220px;
         overflow-y: auto;
       }
@@ -74,7 +93,7 @@
         align-items: baseline;
         padding: 4px 0;
         font-size: 0.85rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        border-bottom: 1px solid var(--line);
       }
       .consulta-intermedio-faltan-item:last-child {
         border-bottom: none;
@@ -144,7 +163,7 @@
       }
       .consulta-habilitada-item[data-estado="habilitada"] .consulta-habilitada-code,
       .consulta-habilitada-item[data-estado="habilitada"] .consulta-habilitada-info b {
-        color: #ffffff;
+        color: var(--text);
         text-decoration: none !important;
       }
       .consulta-habilitada-item[data-estado="bloqueada"] .consulta-habilitada-code,
@@ -157,8 +176,8 @@
         margin: 14px 0;
         padding: 12px 14px;
         border-radius: 10px;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--card-bg);
+        border: 1px solid var(--line);
       }
       .consulta-descarga-label {
         font-size: 0.85rem;
@@ -198,6 +217,11 @@
         transform: translateY(6px);
         transition: opacity 0.18s ease, transform 0.18s ease, background 0.15s ease;
       }
+      html[data-theme="light"] .scroll-top-btn {
+        background: rgba(255,255,255,0.85);
+        border: 1px solid rgba(20,30,60,0.18);
+        color: #16213a;
+      }
       .scroll-top-btn.visible {
         opacity: 1;
         visibility: visible;
@@ -205,6 +229,9 @@
       }
       .scroll-top-btn:hover {
         background: rgba(50, 50, 56, 0.9);
+      }
+      html[data-theme="light"] .scroll-top-btn:hover {
+        background: rgba(240,242,248,0.95);
       }
       .scroll-top-btn svg {
         width: 18px;
@@ -219,7 +246,7 @@
           <img src="logounaj.svg" alt="UNAJ" />
         </div>
         <div>
-          <h1>Oferta Académica - UNAJ</h1>
+          <h1>Oferta Académica - UNAJ<span class="status-dot" id="statusDot"></span></h1>
           <p class="texto_terminal">
             Terminal de consulta
             <span class="texto_horarios"
@@ -229,57 +256,57 @@
         </div>
       </div>
       <div class="header-actions">
-        <button
-          class="sound-toggle"
-          id="consultaToggle"
-          type="button"
-          title="Consultar correlativas"
-        >
-          <span class="icon" id="consultaIcon"></span>
-          <span>Consulta</span>
-        </button>
-        <button
-          class="sound-toggle"
-          id="archivosToggle"
-          type="button"
-          title="Ver archivos"
-        >
-          <span class="icon" id="archivosIcon"></span>
-          <span>Archivos</span>
-        </button>
-        <button
-          class="sound-toggle"
-          id="linksToggle"
-          type="button"
-          title="Ver links útiles"
-        >
-          <span class="icon" id="linksIcon"></span>
-          <span>Links</span>
-        </button>
-        <button
-          class="sound-toggle"
-          id="calendarToggle"
-          type="button"
-          title="Ver mi horario"
-        >
-          <span class="icon" id="calendarIcon"></span>
-          <span>Mis Horarios</span>
-          <span class="cal-count-badge" id="calCountBadge" style="display: none"
-            >0</span
-          >
-        </button>
-        <button
-          class="sound-toggle"
-          id="soundToggle"
-          type="button"
-          title="Activar/desactivar sonido"
-        >
-          <span class="icon" id="soundIcon"></span>
-          <span id="soundLabel">Sonido</span>
-        </button>
         <div class="status-pill">
-          <span class="status-dot" id="statusDot"></span>
           <span id="statusText">Conectando...</span>
+        </div>
+
+        <div class="menu-wrap">
+          <button
+            class="menu-trigger"
+            id="menuTrigger"
+            type="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+            title="Menú"
+          >
+            <span class="icon" id="menuIcon"></span>
+            <span>Menú</span>
+            <span class="cal-count-badge" id="calCountBadge" style="display: none"
+              >0</span
+            >
+            <span class="icon menu-caret" id="menuCaret"></span>
+          </button>
+
+          <div class="menu-panel" id="menuPanel" role="menu">
+            <button class="menu-item" id="themeToggle" type="button" role="menuitem">
+              <span class="icon" id="themeIcon"></span>
+              <span class="menu-item-label" id="themeLabel">Tema oscuro</span>
+            </button>
+            <button class="menu-item" id="soundToggle" type="button" role="menuitem">
+              <span class="icon" id="soundIcon"></span>
+              <span class="menu-item-label" id="soundLabel">Sonido</span>
+            </button>
+
+            <div class="menu-divider"></div>
+
+            <button class="menu-item" id="consultaToggle" type="button" role="menuitem">
+              <span class="icon" id="consultaIcon"></span>
+              <span class="menu-item-label">Consulta</span>
+            </button>
+            <button class="menu-item" id="archivosToggle" type="button" role="menuitem">
+              <span class="icon" id="archivosIcon"></span>
+              <span class="menu-item-label">Archivos</span>
+            </button>
+            <button class="menu-item" id="linksToggle" type="button" role="menuitem">
+              <span class="icon" id="linksIcon"></span>
+              <span class="menu-item-label">Links</span>
+            </button>
+            <button class="menu-item" id="calendarToggle" type="button" role="menuitem">
+              <span class="icon" id="calendarIcon"></span>
+              <span class="menu-item-label">Mis Horarios</span>
+              <span class="cal-count-badge" id="calCountBadgeMenu" style="display: none">0</span>
+            </button>
+          </div>
         </div>
       </div>
     </header>
@@ -387,7 +414,7 @@
           Todavía no agregaste ninguna materia. Buscá una comisión y tocá
           "Agregar al planificador".
         </div>
-        <div class="calendar-grid-outer">
+        <div class="calendar-grid-outer" id="calendarGridOuter">
           <div id="calendarGridWrap" class="calendar-grid-wrap">
             <div id="calendarNoTimeRow" class="cal-notime-row"></div>
             <div id="calendarGrid" class="cal-grid"></div>
@@ -703,7 +730,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-      const BASE_URL = "";
+      const BASE_URL = "http://127.0.0.1:8000";
 
       // IDs reales usados por el sitio original para cada categoría
       const CAREER_IDS = { info: 10, basic: 112, iniciales: 108, extra: 115, compartidas: 113 };
@@ -775,11 +802,126 @@
       <path d="M4 15H9V20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M20 15H15V20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`,
+        menu: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 6.5H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M4 12H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M4 17.5H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>`,
+        chevronDown: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
+        sun: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="4.4" stroke="currentColor" stroke-width="1.7"/>
+      <path d="M12 2.6V5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M12 19V21.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M4.5 4.5L6.2 6.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M17.8 17.8L19.5 19.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M2.6 12H5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M19 12H21.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M4.5 19.5L6.2 17.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M17.8 6.2L19.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    </svg>`,
+        moon: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20.2 14.3C18.9 14.9 17.4 15.2 15.9 15C11.9 14.5 8.9 11 9.1 7C9.2 5.6 9.6 4.3 10.3 3.2C6.4 4 3.5 7.5 3.5 11.7C3.5 16.5 7.4 20.4 12.2 20.4C15.9 20.4 19 18.1 20.2 14.3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    </svg>`,
       };
       document.getElementById("calendarIcon").innerHTML = ICONS.calendar;
       document.getElementById("archivosIcon").innerHTML = ICONS.file;
       document.getElementById("linksIcon").innerHTML = ICONS.link;
       document.getElementById("consultaIcon").innerHTML = ICONS.consulta;
+      document.getElementById("menuIcon").innerHTML = ICONS.menu;
+      document.getElementById("menuCaret").innerHTML = ICONS.chevronDown;
+
+      /* ---------------- MENÚ DESPLEGABLE DEL HEADER ---------------- */
+      (function initHeaderMenu() {
+        const trigger = document.getElementById("menuTrigger");
+        const panel = document.getElementById("menuPanel");
+        if (!trigger || !panel) return;
+
+        function openMenu() {
+          panel.classList.add("open");
+          trigger.setAttribute("aria-expanded", "true");
+        }
+        function closeMenu() {
+          panel.classList.remove("open");
+          trigger.setAttribute("aria-expanded", "false");
+        }
+        function toggleMenu() {
+          if (panel.classList.contains("open")) closeMenu();
+          else openMenu();
+        }
+
+        trigger.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleMenu();
+        });
+
+        // Cierra al tocar afuera
+        document.addEventListener("click", (e) => {
+          if (!panel.contains(e.target) && e.target !== trigger) closeMenu();
+        });
+
+        // Cierra con Escape
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") closeMenu();
+        });
+
+        // Cualquier item del menú lo cierra al tocarlo (los propios handlers
+        // de cada botón abren su modal correspondiente por separado).
+        panel.querySelectorAll(".menu-item").forEach((item) => {
+          item.addEventListener("click", () => closeMenu());
+        });
+      })();
+
+      /* ---------------- TEMA CLARO / OSCURO ---------------- */
+      const THEME_STORAGE_KEY = "unaj_theme";
+
+      function getCurrentTheme() {
+        return document.documentElement.getAttribute("data-theme") === "light"
+          ? "light"
+          : "dark";
+      }
+
+      function updateThemeToggleUI() {
+        const icon = document.getElementById("themeIcon");
+        const label = document.getElementById("themeLabel");
+        if (!icon || !label) return;
+        const theme = getCurrentTheme();
+        if (theme === "light") {
+          icon.innerHTML = ICONS.sun;
+          label.textContent = "Tema claro";
+        } else {
+          icon.innerHTML = ICONS.moon;
+          label.textContent = "Tema oscuro";
+        }
+      }
+
+      function setTheme(theme) {
+        if (theme === "light") {
+          document.documentElement.setAttribute("data-theme", "light");
+        } else {
+          document.documentElement.removeAttribute("data-theme");
+        }
+        try {
+          localStorage.setItem(THEME_STORAGE_KEY, theme);
+        } catch (e) {
+          /* ignore */
+        }
+        updateThemeToggleUI();
+      }
+
+      function toggleTheme() {
+        setTheme(getCurrentTheme() === "light" ? "dark" : "light");
+      }
+
+      document
+        .getElementById("themeToggle")
+        .addEventListener("click", () => {
+          toggleTheme();
+          sndTick();
+        });
+
+      updateThemeToggleUI();
 
       /* ---------------- SONIDO (Web Audio API, sin archivos externos) ---------------- */
       let audioCtx = null;
@@ -3213,13 +3355,17 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
 
       function updateCalCountBadge() {
         const badge = document.getElementById("calCountBadge");
-        if (!badge) return;
-        if (calendarItems.length === 0) {
-          badge.style.display = "none";
-        } else {
-          badge.style.display = "inline-flex";
-          badge.textContent = calendarItems.length;
-        }
+        const badgeMenu = document.getElementById("calCountBadgeMenu");
+        const count = calendarItems.length;
+        [badge, badgeMenu].forEach((el) => {
+          if (!el) return;
+          if (count === 0) {
+            el.style.display = "none";
+          } else {
+            el.style.display = "inline-flex";
+            el.textContent = count;
+          }
+        });
       }
 
       function syncCalendarButtons() {
@@ -3565,7 +3711,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         });
 
       /* ---------------- PANTALLA COMPLETA (solo la grilla del horario) ---------------- */
-      const calendarCardEl = document.getElementById("calendarGridWrap");
+      const calendarCardEl = document.getElementById("calendarGridOuter");
       const calendarFsBtn = document.getElementById("calendarFullscreenBtn");
       const calendarFsIcon = document.getElementById("calendarFsIcon");
 
@@ -4568,7 +4714,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       const fbApp = initializeApp(firebaseConfig);
       const db = getDatabase(fbApp);
 
-      const BASE_URL = "";
+      const BASE_URL = "http://127.0.0.1:8000";
 
       let currentTeacherId = null;
       let currentCommentsRef = null;
