@@ -353,6 +353,15 @@
         <div class="modal-actions">
           <button class="btn-modal cancel" id="calendarCloseBtn">Cerrar</button>
         </div>
+
+        <button
+          class="cal-fullscreen-btn"
+          id="calendarFullscreenBtn"
+          type="button"
+          title="Pantalla completa"
+        >
+          <span id="calendarFsIcon"></span>
+        </button>
       </div>
     </div>
 
@@ -686,6 +695,18 @@
       <path d="M9 9.5C9 7.6 10.5 6.2 12.2 6.2C13.9 6.2 15.2 7.4 15.2 9C15.2 10.4 14.3 11 13.3 11.7C12.4 12.3 12 12.9 12 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
       <circle cx="12" cy="17.3" r="1.05" fill="currentColor"/>
       <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+    </svg>`,
+        expand: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 4H4V9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M15 4H20V9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M9 20H4V15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M15 20H20V15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
+        compress: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 9H9V4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M20 9H15V4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M4 15H9V20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M20 15H15V20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`,
       };
       document.getElementById("calendarIcon").innerHTML = ICONS.calendar;
@@ -2925,6 +2946,56 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           updateCalCountBadge();
           if (selectedSubject) syncCalendarButtons();
         });
+
+      /* ---------------- PANTALLA COMPLETA (modal Mis Horarios) ---------------- */
+      const calendarCardEl = document.querySelector(".modal-card.calendar-card");
+      const calendarFsBtn = document.getElementById("calendarFullscreenBtn");
+      const calendarFsIcon = document.getElementById("calendarFsIcon");
+
+      function isCalendarFullscreen() {
+        const fsEl =
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement;
+        return fsEl === calendarCardEl;
+      }
+
+      function updateCalendarFsIcon() {
+        const active = isCalendarFullscreen();
+        calendarFsIcon.innerHTML = active ? ICONS.compress : ICONS.expand;
+        calendarFsBtn.title = active
+          ? "Salir de pantalla completa"
+          : "Pantalla completa";
+      }
+      updateCalendarFsIcon();
+
+      calendarFsBtn.addEventListener("click", () => {
+        if (!isCalendarFullscreen()) {
+          const req =
+            calendarCardEl.requestFullscreen ||
+            calendarCardEl.webkitRequestFullscreen ||
+            calendarCardEl.msRequestFullscreen;
+          if (req) {
+            req.call(calendarCardEl);
+          } else {
+            // Sin soporte de Fullscreen API (ej. Safari iOS viejo): usamos
+            // una clase CSS que expande el modal a todo el viewport.
+            calendarCardEl.classList.toggle("cal-fs-fallback");
+            updateCalendarFsIcon();
+          }
+        } else {
+          const exit =
+            document.exitFullscreen ||
+            document.webkitExitFullscreen ||
+            document.msExitFullscreen;
+          if (exit) exit.call(document);
+        }
+        sndTick();
+      });
+
+      ["fullscreenchange", "webkitfullscreenchange", "msfullscreenchange"].forEach(
+        (evt) => document.addEventListener(evt, updateCalendarFsIcon),
+      );
 
       document
         .getElementById("calendarPdfBtn")
