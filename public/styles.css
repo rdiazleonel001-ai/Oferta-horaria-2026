@@ -1423,7 +1423,7 @@ footer {
   .calendar-modal-head-actions { width: 100%; }
   .calendar-modal-head-actions .btn-modal { flex: 1; text-align: center; }
   .calendar-grid-wrap { max-height: 40vh; }
-  .calendar-list { max-height: 26vh; }
+  .calendar-list { max-height: 22vh; }
   .cal-block { font-size: 0.68rem; }
   .cal-block b { font-size: 0.75rem; }
   .cal-notime-chip { padding: 5px 6px; }
