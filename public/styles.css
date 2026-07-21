@@ -845,6 +845,12 @@ footer {
   min-width: 260px;
 }
 
+@media (max-width: 640px) {
+    .cal-block {
+        font-size: 0.68rem;
+    }
+}
+
 /* ---------- FILA DE MATERIAS SIN HORARIO FIJO (pero con día conocido) ---------- */
 /* Se ubica arriba de la grilla horaria, respetando las mismas columnas por
    día, para que cada chip quede exactamente en el día que corresponde. */
