@@ -3981,20 +3981,20 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
               let position = 0;
               let firstPage = true;
 
-              while (heightLeft > 0) {
-                if (!firstPage) newPdf.addPage();
-                newPdf.addImage(
-                  imgData,
-                  "JPEG",
-                  margin,
-                  margin - position,
-                  imgWidth,
-                  imgHeight,
-                );
-                heightLeft -= usableHeight;
-                position += usableHeight;
-                firstPage = false;
-              }
+            while (heightLeft > 0.5) {
+  if (!firstPage) newPdf.addPage();
+  newPdf.addImage(
+    imgData,
+    "JPEG",
+    margin,
+    margin - position,
+    imgWidth,
+    imgHeight,
+  );
+  heightLeft -= usableHeight;
+  position += usableHeight;
+  firstPage = false;
+}
 
               this.prop.pdf = newPdf;
             } catch (err) {
