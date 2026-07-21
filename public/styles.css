@@ -1011,6 +1011,7 @@ footer {
   position: relative;
   border-left: 1px solid var(--line);
   padding-top: 6px;
+  max-height: 45vh;
 }
 .cal-day-col:first-of-type { border-left: none; }
 .cal-hour-line {
