@@ -2130,14 +2130,13 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         }
 
         const itemsHtml = faltantes
-          .map(
-            (codigo) => `
+  .map(
+    (codigo) => `
       <div class="consulta-intermedio-faltan-item">
-        <span class="consulta-intermedio-faltan-code">${escapeHtml(codigo)}</span>
         <span>${escapeHtml(consultaNombre(codigo))}</span>
       </div>`,
-          )
-          .join("");
+  )
+  .join("");
 
         box.innerHTML = itemsHtml;
       }
