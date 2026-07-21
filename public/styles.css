@@ -1327,11 +1327,6 @@ footer {
 /* =====================================================
    RESPONSIVE
    ===================================================== */
-@media (max-width: 1400px) {
-    .cal-block span{
-        font-size: 0.76rem ; 
-    }
-}
 
 @media (max-width: 1024px) {
   body { font-size: 21px; }
