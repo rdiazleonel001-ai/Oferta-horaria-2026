@@ -845,11 +845,7 @@ footer {
   min-width: 260px;
 }
 
-@media (max-width: 1400px) {
-    .cal-block {
-        font-size: 0.76rem;
-    }
-}
+
 
 /* ---------- FILA DE MATERIAS SIN HORARIO FIJO (pero con día conocido) ---------- */
 /* Se ubica arriba de la grilla horaria, respetando las mismas columnas por
@@ -1331,6 +1327,11 @@ footer {
 /* =====================================================
    RESPONSIVE
    ===================================================== */
+@media (max-width: 1400px) {
+    .cal-block {
+        font-size: 0.76rem !important; 
+    }
+}
 
 @media (max-width: 1024px) {
   body { font-size: 21px; }
@@ -1340,6 +1341,7 @@ footer {
     padding: 22px 24px 44px;
   }
   header { padding: 24px 24px 18px; }
+  
 }
 
 @media (max-width: 860px) {
