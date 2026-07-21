@@ -986,6 +986,7 @@ footer {
   font-size: 0.96rem;
   line-height: 1.3;
   color: var(--text);
+  min-width: 190px;
   
 }
 .cal-block b {
