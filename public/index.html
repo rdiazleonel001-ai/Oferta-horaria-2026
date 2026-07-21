@@ -2356,7 +2356,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           tablas.push(filasHtml);
           filasHtml = "";
         };
-        const ALTO_FILA_PX = 0.35; // subí este número para filas más altas, bajalo para más compactas
+        const ALTO_FILA_PX = 0.25; // subí este número para filas más altas, bajalo para más compactas
         anios.forEach((a) => {
           if (a.titulo) {
             filasHtml += `<tr><td colspan="5" style="${CELDA_BORDE}background:#${CONSULTA_COLOR_MAGENTA};color:#fff;font-weight:700;padding:4px 8px;text-align:center;font-size:12px;">${escapeHtml(a.titulo)}</td></tr>`;
