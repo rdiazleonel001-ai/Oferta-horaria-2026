@@ -1100,10 +1100,16 @@ footer {
   color: #0b1220 !important;
   font-size: 14px;
   line-height: 1.4;
+  overflow: visible;
 }
 .pdf-export-root .cal-block b {
   color: inherit !important;
-  font-size: 18px;
+  font-size: 15px;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+  display: block;
 }
 .pdf-export-root .no-schedule-label,
 .pdf-export-root .cs-label { color: #0b1220; font-size: 18px; }
