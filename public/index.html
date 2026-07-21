@@ -2356,7 +2356,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           tablas.push(filasHtml);
           filasHtml = "";
         };
-        const ALTO_FILA_PX = 0.5; // subí este número para filas más altas, bajalo para más compactas
+        const ALTO_FILA_PX = 0.45; // subí este número para filas más altas, bajalo para más compactas
         anios.forEach((a) => {
           if (a.titulo) {
             filasHtml += `<tr><td colspan="5" style="${CELDA_BORDE}background:#${CONSULTA_COLOR_MAGENTA};color:#fff;font-weight:700;padding:4px 8px;text-align:center;font-size:12px;">${escapeHtml(a.titulo)}</td></tr>`;
@@ -2398,7 +2398,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             const claseSalto = "";
             // margin-top solo en las tablas que empiezan página nueva
             // (idx > 0), para separarlas del borde superior de la hoja.
-            const margenTop = idx === 0 ? "" : (consultaPlanElegido === "viejo" ? "margin-top:140px;" : "margin-top:12px;");
+            const margenTop = idx === 0 ? "" : (consultaPlanElegido === "viejo" ? "margin-top:140px;" : "margin-top:30px;");
             // border-collapse:separate + border-spacing:0 en vez de
             // collapse: con "collapse", html2canvas suele recortar por
             // redondeo de subpíxeles el borde derecho (y a veces el
