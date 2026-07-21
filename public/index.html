@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700;800&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700;800&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Poppins:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -130,6 +130,49 @@
         opacity: 0.85;
         min-width: 64px;
         text-align: center;
+      }
+
+      /* Estados de materias en el resultado de la consulta */
+      .consulta-habilitada-item[data-estado="aprobada"] {
+        opacity: 0.7;
+      }
+      .consulta-habilitada-item[data-estado="aprobada"] .consulta-habilitada-code,
+      .consulta-habilitada-item[data-estado="aprobada"] .consulta-habilitada-info b {
+        color: #6b6b70;
+        text-decoration: line-through;
+        text-decoration-color: #6b6b70;
+      }
+      .consulta-habilitada-item[data-estado="habilitada"] .consulta-habilitada-code,
+      .consulta-habilitada-item[data-estado="habilitada"] .consulta-habilitada-info b {
+        color: #ffffff;
+        text-decoration: none !important;
+      }
+      .consulta-habilitada-item[data-estado="bloqueada"] .consulta-habilitada-code,
+      .consulta-habilitada-item[data-estado="bloqueada"] .consulta-habilitada-info b {
+        color: #ef4444;
+        text-decoration: none !important;
+      }
+
+      .consulta-descarga-box {
+        margin: 14px 0;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .consulta-descarga-label {
+        font-size: 0.85rem;
+        opacity: 0.85;
+        margin-bottom: 10px;
+      }
+      .consulta-descarga-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .consulta-descarga-row .btn-modal {
+        flex: 1;
+        min-width: 160px;
       }
 
       /* Botón flotante "volver arriba" dentro de la lista de materias */
@@ -622,6 +665,29 @@
             id="consultaHabilitadasList"
             class="consulta-habilitadas-list"
           ></div>
+
+          <div class="consulta-descarga-box">
+            <div class="consulta-descarga-label">
+              Descargar este resultado (con los colores aplicados):
+            </div>
+            <div class="consulta-descarga-row">
+              <button
+                class="btn-modal cancel"
+                id="consultaDescargarPdfBtn"
+                type="button"
+              >
+                📄 Descargar PDF
+              </button>
+              <button
+                class="btn-modal cancel"
+                id="consultaDescargarExcelBtn"
+                type="button"
+              >
+                📊 Descargar Excel
+              </button>
+            </div>
+          </div>
+
           <div class="modal-actions">
             <button class="btn-modal cancel" id="consultaRestartBtn2">
               Volver a empezar
@@ -1179,6 +1245,24 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         65: ["Procesamiento de Imágenes y Modelado 3D", ["36", "37", "39"]],
       };
 
+      // Carga horaria semanal de cada materia del Plan 2022 (según el
+      // temario oficial). "48" y "49" no tienen carga horaria semanal
+      // publicada en el temario (PPS e Inglés extracurricular), quedan null.
+      const CARGA_HORARIA_2022 = {
+        "01": 4, "02": 4, "03": 4, "04": 4, "05": 4, "06": 4, "07": 4, "08": 4, "09": 4,
+        10: 4, 11: 4, 12: 4, 13: 8, 14: 4,
+        15: 4, 16: 8, 17: 4, 18: 4, 19: 4,
+        20: 8, 21: 8, 22: 4, 23: 4, 24: 4,
+        25: 8, 26: 4, 27: 4, 28: 4, 29: 4,
+        30: 4, 31: 4, 32: 4, 33: 6, 34: 4,
+        35: 4, 36: 4, 37: 4, 38: 4, 39: 6,
+        40: 4, 41: 4, 42: 4, 43: 3, 44: 3,
+        45: 4, 46: 4, 47: 4, 48: null, 49: null,
+        50: 4, 51: 4, 52: 4, 53: 4, 54: 4,
+        55: 4, 56: 4, 57: 4, 58: 4, 59: 4,
+        60: 4, 61: 4, 62: 4, 63: 4, 64: 4, 65: 4,
+      };
+
       const CONSULTA_ORDER = [
         "01",
         "02",
@@ -1661,6 +1745,25 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         },
       ];
 
+      // Carga horaria semanal de cada materia del Plan 2014 (según el
+      // temario oficial). Las Optativas I/II/III (I3031/I3032/I3033) no
+      // están en PLAN2014_MATERIAS (se listan agrupadas como "Materia
+      // Optativa" con los códigos OIxxx / CI023), así que no hace falta acá.
+      const CARGA_HORARIA_2014 = {
+        CI021: 4, CI003: 4, CI009: 4, CI002: 4,
+        CI001: 4, CI010: 6, CI004: 4, CI012: 9,
+        CI022: 9, I3001: 4, I3002: 7, I3003: 4,
+        CI025: 9, CI026: 6, I3004: 4, I3005: 5, I3006: 3,
+        CI027: 9, I3007: 5, I3008: 5, I3009: 5, I3010: 3,
+        CI029: 5, I3011: 6, CI011: 6, I3012: 6, I3013: 4,
+        I3014: 6, I3015: 6, I3016: 5, I3017: 4, I3018: 6,
+        I3019: 5, I3020: 6, I3021: 5, CI030: 5,
+        I3023: 6, I3027: 4, CI031: 5,
+        CI035: 4, I3028: 5, I3029: 13,
+        IG001: 3,
+        OI001: 4, OI008: 4, OI002: 4, OI037: 4, OI009: 4, OI038: 4, OI039: 4, CI023: 4,
+      };
+
       function buscarPlan2014PorNombre(nombre) {
         const target = normalizeText(nombre);
         // Primero intenta match exacto y, si no hay, un match "contiene" en
@@ -1727,6 +1830,9 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           ubicacion(codigo) {
             return PLAN2022_UBICACION[codigo] || { anio: 0, cuat: 0 };
           },
+          cargaHoraria(codigo) {
+            return CARGA_HORARIA_2022[codigo] ?? null;
+          },
         },
         viejo: {
           label: "Plan Viejo (2014)",
@@ -1746,6 +1852,9 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             return m
               ? { anio: m.anio, cuat: m.cuat, etiqueta: m.etiqueta }
               : { anio: 0, cuat: 0 };
+          },
+          cargaHoraria(codigo) {
+            return CARGA_HORARIA_2014[codigo] ?? null;
           },
         },
       };
@@ -1985,14 +2094,17 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             : "Materias que podés cursar ahora (Plan Nuevo 2022):";
 
         const list = document.getElementById("consultaHabilitadasList");
-
+        const habilitadasSet = new Set(habilitadas);
         if (habilitadas.length === 0) {
-          list.innerHTML = `<div class="empty-hint">No hay materias disponibles con lo respondido hasta ahora.</div>`;
-          sndSuccess();
-          return;
+          list.innerHTML =
+            "<div style='color:var(--muted);text-align:center;padding:10px 0;'>Por ahora no tenés materias nuevas para cursar.</div>";
+        } else {
+          list.innerHTML = renderMateriasPorBloques(
+            habilitadas,
+            aprobadas,
+            habilitadasSet,
+          );
         }
-
-        list.innerHTML = renderHabilitadasPorBloques(habilitadas);
         sndSuccess();
       }
 
@@ -2047,9 +2159,18 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           }
         });
 
-      function itemHabilitadaHtml(codigo, nombre, reqsTxt) {
+      // Determina el estado de una materia para pintarla en el resultado:
+      // "aprobada" (gris, tachada), "habilitada" (verde, la puede cursar
+      // ahora) o "bloqueada" (roja, todavía no cumple correlativas).
+      function estadoMateria(codigo, aprobadas, habilitadasSet) {
+        if (aprobadas.has(codigo)) return "aprobada";
+        if (habilitadasSet.has(codigo)) return "habilitada";
+        return "bloqueada";
+      }
+
+      function itemHabilitadaHtml(codigo, nombre, reqsTxt, estado) {
         return `
-      <div class="consulta-habilitada-item">
+      <div class="consulta-habilitada-item" data-estado="${estado}">
         <span class="consulta-habilitada-code">${escapeHtml(codigo)}</span>
         <div class="consulta-habilitada-info">
           <b>${escapeHtml(nombre)}</b>
@@ -2058,13 +2179,14 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       </div>`;
       }
 
-      // Agrupa las materias habilitadas (códigos del plan elegido) en bloques
-      // por año y cuatrimestre, usando la ubicación real de cada materia en
-      // ESE plan (nunca traduce a otro plan).
-      function renderHabilitadasPorBloques(habilitadas) {
+      // Agrupa TODAS las materias del plan elegido en bloques por año y
+      // cuatrimestre, usando la ubicación real de cada materia en ESE plan
+      // (nunca traduce a otro plan), y le asigna a cada una su estado
+      // (aprobada / habilitada / bloqueada) para pintarla en consecuencia.
+      function renderMateriasPorBloques(codigos, aprobadas, habilitadasSet) {
         const grupos = new Map(); // clave -> { titulo, items: [] }
 
-        habilitadas.forEach((c) => {
+        codigos.forEach((c) => {
           const ubic = consultaAdapter.ubicacion(c);
           // Cuando anio es 0 (Inglés, Optativas, etc.) agrupamos por
           // etiqueta, no por "0-0", para no mezclar Inglés (Extracurricular)
@@ -2083,8 +2205,9 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             grupos.set(clave, { titulo, orden: ubic.anio === 0 ? 999 : ubic.anio * 10 + ubic.cuat, items: [] });
           }
           const reqsTxt = consultaReqsTexto(c);
+          const estado = estadoMateria(c, aprobadas, habilitadasSet);
           grupos.get(clave).items.push(
-            itemHabilitadaHtml(c, consultaAdapter.nombre(c).split(" - ").slice(1).join(" - "), reqsTxt),
+            itemHabilitadaHtml(c, consultaAdapter.nombre(c).split(" - ").slice(1).join(" - "), reqsTxt, estado),
           );
         });
 
@@ -2094,6 +2217,492 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         return ordenados
           .map((g) => bloqueHtml(g.titulo, g.items.join("")))
           .join("");
+      }
+
+      // ---------------------------------------------------------------
+      // Descarga del resultado (PDF / Excel) con los colores aplicados.
+      // Usa los mismos datos que ya se calcularon para pintar la lista en
+      // pantalla (consultaState.aprobadas + consultaHabilitadasActuales),
+      // agrupados por año/cuatrimestre igual que renderMateriasPorBloques,
+      // pero devolviendo datos crudos en vez de HTML.
+      // ---------------------------------------------------------------
+      const CONSULTA_ESTADO_LABEL = {
+        aprobada: "Aprobada",
+        habilitada: "Podés cursar ahora",
+        bloqueada: "No podés cursar todavía",
+      };
+
+      // Colores institucionales del plan de estudios (mismos que se usan
+      // en el PDF y el Excel oficiales de la carrera): magenta para el
+      // banner de "Año" y cian para el banner de "Cuatrimestre" y para el
+      // encabezado de la tabla.
+      const CONSULTA_COLOR_MAGENTA = "FF0596";
+      const CONSULTA_COLOR_CIAN = "0096C8";
+
+      const CONSULTA_ANIO_NOMBRE = {
+        1: "Primer Año",
+        2: "Segundo Año",
+        3: "Tercer Año",
+        4: "Cuarto Año",
+        5: "Quinto Año",
+      };
+
+      // Texto corto de correlativas (solo códigos, ej. "5 - 8"), igual al
+      // formato usado en el plan de estudios oficial.
+      function consultaReqsCodigosTexto(codigo) {
+        const reqs = consultaAdapter.reqs(codigo);
+        return reqs.length ? reqs.join(" - ") : "-";
+      }
+
+      // Arma la estructura anidada Año -> Cuatrimestre -> materias, con el
+      // estado (aprobada / habilitada / bloqueada) de cada una, para
+      // exportarla al PDF y al Excel con el mismo diseño que el plan de
+      // estudios oficial de la carrera.
+      function consultaGetExportEstructura() {
+        const aprobadas = consultaState.aprobadas;
+        const habilitadasSet = new Set(consultaHabilitadasActuales);
+        const intermedioSet = new Set(consultaAdapter.intermedio || []);
+        const anios = new Map();
+
+        consultaAdapter.order.forEach((c) => {
+          const ubic = consultaAdapter.ubicacion(c);
+          const anioKey = ubic.anio || 0;
+          if (!anios.has(anioKey)) {
+            anios.set(anioKey, {
+              titulo: anioKey === 0 ? null : CONSULTA_ANIO_NOMBRE[anioKey] || `${anioKey}° Año`,
+              orden: anioKey === 0 ? 999 : anioKey,
+              cuats: new Map(),
+            });
+          }
+          const anioObj = anios.get(anioKey);
+          const cuatKey = anioKey === 0 ? ubic.etiqueta || "Otras" : ubic.cuat;
+          if (!anioObj.cuats.has(cuatKey)) {
+            anioObj.cuats.set(cuatKey, {
+              titulo:
+                anioKey === 0
+                  ? ubic.etiqueta || "Otras"
+                  : NOMBRES_CUAT[ubic.cuat] || "",
+              orden: anioKey === 0 ? 0 : ubic.cuat,
+              items: [],
+            });
+          }
+          anioObj.cuats.get(cuatKey).items.push({
+            codigo: c,
+            nombre: consultaAdapter.nombre(c).split(" - ").slice(1).join(" - "),
+            carga: consultaAdapter.cargaHoraria(c),
+            correlativas: consultaReqsCodigosTexto(c),
+            esIntermedio: intermedioSet.has(c),
+            estado: estadoMateria(c, aprobadas, habilitadasSet),
+          });
+        });
+
+        return Array.from(anios.values())
+          .sort((a, b) => a.orden - b.orden)
+          .map((a) => ({
+            titulo: a.titulo,
+            cuats: Array.from(a.cuats.values()).sort((x, y) => x.orden - y.orden),
+          }));
+      }
+
+      // Fondo sutil por estado (el texto va siempre en negro, sin negrita,
+      // según lo pedido: la única marca visual es el color de fondo).
+      const CONSULTA_ESTADO_BG_HEX = {
+        aprobada: "#ececec",
+        habilitada: "#a8e6c1",
+        bloqueada: "#FFCECC",
+      };
+
+      function consultaDescargarPDF() {
+        if (!consultaAdapter) return;
+        if (typeof html2pdf === "undefined") {
+          showToast(
+            "error",
+            "No se pudo cargar el generador de PDF (revisá tu conexión a internet).",
+          );
+          return;
+        }
+
+        const anios = consultaGetExportEstructura();
+        const planNombre =
+          consultaPlanElegido === "viejo"
+            ? "Plan 2014 — Ingeniería en Informática"
+            : "Plan 2022 — Ingeniería en Informática";
+
+        const CELDA_BORDE = "border:1.5px solid #111;";
+
+        // Se saca la columna ESTADO: el fondo sutil (verde/rojo/gris) más
+        // la tachadura en las aprobadas ya alcanzan para distinguir el
+        // estado de cada materia, sin necesitar una columna extra.
+        // Encabezado de tabla compacto (una sola línea, sin <br/>, menos
+        // padding y font-size más chico) para que la hoja 1 entre completa
+        // en la página A4, igual que en el PDF/Word original.
+        const THEAD_HTML = `
+            <thead>
+              <tr style="background:#${CONSULTA_COLOR_CIAN};color:#fff;">
+                <th style="padding:5px 6px;border:1.5px solid #111;text-align:center;font-size:11px;font-weight:700;">CÓDIGO</th>
+                <th style="padding:5px 6px;border:1.5px solid #111;text-align:left;font-size:11px;font-weight:700;">ASIGNATURA</th>
+                <th style="padding:5px 6px;border:1.5px solid #111;text-align:center;font-size:11px;font-weight:700;">CARGA HORARIA SEMANAL</th>
+                <th style="padding:5px 6px;border:1.5px solid #111;text-align:center;font-size:11px;font-weight:700;">TÍTULO INTERMEDIO</th>
+                <th style="padding:5px 6px;border:1.5px solid #111;text-align:center;font-size:11px;font-weight:700;">CORRELATIVAS</th>
+              </tr>
+            </thead>`;
+
+        // Un único salto de página: hoja 1 = desde Primer Año hasta Cuarto
+        // Año / 1er Cuatrimestre; hoja 2 = desde Cuarto Año / 2do
+        // Cuatrimestre hasta el final (Quinto Año, PPS, Inglés, Optativas).
+        const tablas = [];
+        let filasHtml = "";
+        const cerrarTabla = () => {
+          tablas.push(filasHtml);
+          filasHtml = "";
+        };
+        const ALTO_FILA_PX = 0.5; // subí este número para filas más altas, bajalo para más compactas
+        anios.forEach((a) => {
+          if (a.titulo) {
+            filasHtml += `<tr><td colspan="5" style="${CELDA_BORDE}background:#${CONSULTA_COLOR_MAGENTA};color:#fff;font-weight:700;padding:4px 8px;text-align:center;font-size:12px;">${escapeHtml(a.titulo)}</td></tr>`;
+          }
+          a.cuats.forEach((cu) => {
+            const saltoCuat =
+              a.titulo === "Cuarto Año" && cu.titulo === "2do Cuatrimestre";
+            if (saltoCuat) cerrarTabla();
+            if (cu.titulo) {
+              filasHtml += `<tr><td colspan="5" style="${CELDA_BORDE}background:#${CONSULTA_COLOR_CIAN};color:#fff;font-weight:700;padding:3px 8px;text-align:center;font-size:11px;">${escapeHtml(cu.titulo)}</td></tr>`;
+            }
+            cu.items.forEach((it) => {
+              const bg = CONSULTA_ESTADO_BG_HEX[it.estado];
+              const strike =
+                it.estado === "aprobada" ? "text-decoration:line-through;" : "";
+              // Padding vertical de fila compacto y uniforme en ambas
+              // hojas: así entra hasta Cuarto Año / 1er Cuatrimestre en la
+              // página 1, igual que en el PDF/Word original.
+              const padV = `${ALTO_FILA_PX}px`;
+              filasHtml += `
+              <tr>
+                <td style="padding:${padV} 6px;${CELDA_BORDE}text-align:center;color:#000;background:${bg};font-size:11px;${strike}">${escapeHtml(it.codigo)}</td>
+                <td style="padding:${padV} 6px;${CELDA_BORDE}color:#000;background:${bg};font-size:11px;${strike}">${escapeHtml(it.nombre)}</td>
+                <td style="padding:${padV} 6px;${CELDA_BORDE}text-align:center;color:#000;background:${bg};font-size:11px;${strike}">${it.carga != null ? it.carga : "-"}</td>
+                <td style="padding:${padV} 6px;${CELDA_BORDE}text-align:center;color:#000;background:${bg};font-size:11px;${strike}">${it.esIntermedio ? "X" : "-"}</td>
+                <td style="padding:${padV} 6px;${CELDA_BORDE}text-align:center;color:#000;background:${bg};font-size:11px;${strike}">${escapeHtml(it.correlativas)}</td>
+              </tr>`;
+            });
+          });
+        });
+        cerrarTabla();
+
+        // Cada segmento se envuelve en su propia tabla; a todas menos la
+        // primera se les fuerza el salto de página en la tabla misma (no
+        // en una fila suelta), así el borde de página cae siempre entre
+        // dos tablas y nunca parte una fila.
+        const tablasHtml = tablas
+          .map((filas, idx) => {
+            const claseSalto = "";
+            // margin-top solo en las tablas que empiezan página nueva
+            // (idx > 0), para separarlas del borde superior de la hoja.
+            const margenTop = idx === 0 ? "" : (consultaPlanElegido === "viejo" ? "margin-top:140px;" : "margin-top:12px;");
+            // border-collapse:separate + border-spacing:0 en vez de
+            // collapse: con "collapse", html2canvas suele recortar por
+            // redondeo de subpíxeles el borde derecho (y a veces el
+            // inferior) de la tabla al rasterizar, dejándolo invisible
+            // en el PDF. Con "separate" cada celda dibuja su propio
+            // borde completo y no se pierde ninguno.
+            const thead = idx === 0 ? THEAD_HTML : "";
+            return `<table${claseSalto} style="width:100%;border-collapse:separate;border-spacing:0;box-sizing:border-box;font-size:11px;border:1px solid #111;${margenTop}">${thead}<tbody>${filas}</tbody></table>`;
+          })
+          .join('<div style="height:6px;"></div>');
+
+        const source = document.createElement("div");
+        source.style.fontFamily = "'Poppins', Arial, sans-serif";
+        source.style.color = "#000";
+        source.style.background = "#ffffff";
+        source.style.padding = "0px";
+        source.innerHTML = `
+          <h1 style="margin:0 0 6px;text-align:center;font-size:22px;font-weight:800;letter-spacing:0.2px;">Ingeniería en Informática (${consultaPlanElegido === "viejo" ? "2014" : "2022"})</h1>
+          ${tablasHtml}
+          <div style="margin-top:10px;font-size:11px;color:#000;">
+            <b>Referencias:</b>
+            <span style="background:${CONSULTA_ESTADO_BG_HEX.aprobada};text-decoration:line-through;padding:1px 4px;">Aprobada</span> ·
+            <span style="background:${CONSULTA_ESTADO_BG_HEX.habilitada};padding:1px 4px;">Podés cursar ahora</span> ·
+            <span style="background:${CONSULTA_ESTADO_BG_HEX.bloqueada};padding:1px 4px;">No podés cursar todavía</span>
+          </div>
+        `;
+
+        // ---- 2 VARIABLES PARA AJUSTAR LA TABLA A GUSTO ----
+        // MARGEN_LATERAL_MM: aire en blanco a cada costado de la hoja (en
+        // milímetros). Subilo (ej: 20, 30) para que la tabla se vea MÁS
+        // ANGOSTA dentro de la hoja (más margen blanco a los lados).
+        // Bajalo (ej: 4, 0) para que ocupe casi todo el ancho de la hoja.
+        //   Valor normal: 8.
+        // ESCALA_ALTO: estira o comprime SOLO el LARGO (alto) de la tabla,
+        // sin tocar el ancho. 1 = normal. 0.9 = 10% más baja/compacta.
+        // 1.1 = 10% más alta/estirada.
+        const MARGEN_LATERAL_MM = 25;
+        
+
+        const wrapper = document.createElement("div");
+        wrapper.style.position = "fixed";
+        wrapper.style.top = "0";
+        wrapper.style.left = "-10000px";
+        wrapper.style.width = "1006px";
+        wrapper.style.overflow = "visible";
+        wrapper.style.background = "#ffffff";
+        source.style.paddingRight = "8px"
+        wrapper.appendChild(source);
+       
+        document.body.appendChild(wrapper);
+        // getBoundingClientRect().height ya devuelve el alto POST-transform
+        // (con el scaleY ya aplicado), así que se usa directo, sin volver a
+        // multiplicar por ESCALA_ALTO. Multiplicarlo dos veces (como estaba
+        // antes) dejaba el wrapper más bajo de lo que el contenido escalado
+        // realmente ocupaba, y html2canvas cortaba el final de la tabla,
+        // dejando el hueco en blanco antes del salto de página forzado.
+
+        const opt = {
+          // [arriba, derecha, abajo, izquierda] en mm. El ancho visual
+          // real de la tabla en la hoja depende de este margen lateral,
+          // no del ancho del wrapper: html2pdf siempre estira/encoge el
+          // canvas para llenar el espacio entre los márgenes izq/der.
+          margin: [0, MARGEN_LATERAL_MM, 0, MARGEN_LATERAL_MM],
+          filename: `materias-${consultaPlanElegido}-unaj.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            backgroundColor: "#ffffff",
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+          },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+          // Solo "css": el modo "legacy" es el que inserta un relleno
+          // (clonando el estilo, borde incluido, del elemento siguiente)
+          // antes de cada salto forzado para "evitar" que se corte, y es
+          // eso lo que generaba la celda gigante con borde de color al
+          // final de cada hoja. Los saltos van sobre el propio <table>
+          // de cada segmento (page-break-before/break-before), y como el
+          // contenido se corta siempre entre dos tablas completas (nunca
+          // a mitad de una fila), "legacy" sobra.
+          pagebreak: { mode: ["css"] },
+        };
+
+        // Nos aseguramos de que la tipografía Poppins ya esté cargada
+        // antes de rasterizar el HTML; si no, html2canvas puede capturar
+        // el texto con la fuente de reemplazo (Arial) en vez de Poppins.
+       const generarPdf = () => {
+  wrapper.style.height = `${source.getBoundingClientRect().height}px`;
+  return html2pdf()
+    .set(opt)
+    .from(source)
+    .save()
+    .then(() => {
+      document.body.removeChild(wrapper);
+      sndSuccess();
+    })
+    .catch(() => {
+      document.body.removeChild(wrapper);
+      showToast("error", "No se pudo generar el PDF.");
+    });
+}; 
+
+        if (document.fonts && document.fonts.ready) {
+          Promise.all([
+            document.fonts.load("400 13px Poppins"),
+            document.fonts.load("700 13px Poppins"),
+            document.fonts.load("800 32px Poppins"),
+          ])
+            .then(() => document.fonts.ready)
+            .then(generarPdf)
+            .catch(generarPdf);
+        } else {
+          generarPdf();
+        }
+      }
+
+      // Carga (una sola vez) la librería xlsx-js-style, que a diferencia de
+      // la versión gratuita estándar de SheetJS sí sabe ESCRIBIR estilos
+      // (colores de relleno y de fuente) en el .xlsx generado.
+      function consultaCargarXLSX() {
+        return new Promise((resolve, reject) => {
+          if (typeof XLSX !== "undefined") {
+            resolve();
+            return;
+          }
+          const script = document.createElement("script");
+          script.src =
+            "https://cdn.jsdelivr.net/npm/xlsx-js-style/dist/xlsx.bundle.js";
+          script.onload = () => resolve();
+          script.onerror = () =>
+            reject(new Error("No se pudo cargar la librería de Excel."));
+          document.head.appendChild(script);
+        });
+      }
+
+      async function consultaDescargarExcel() {
+        if (!consultaAdapter) return;
+        try {
+          await consultaCargarXLSX();
+        } catch (e) {
+          showToast(
+            "error",
+            "No se pudo cargar el generador de Excel (revisá tu conexión a internet).",
+          );
+          return;
+        }
+
+        const anios = consultaGetExportEstructura();
+
+        const cell = (v, t, s) => ({ v, t: t || "s", s });
+
+        const FUENTE = "Poppins";
+
+        const TITLE_STYLE = {
+          font: { bold: true, sz: 20, name: FUENTE },
+          alignment: { horizontal: "left", vertical: "center" },
+        };
+        const HEADER_STYLE = {
+          font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12, name: FUENTE },
+          fill: { patternType: "solid", fgColor: { rgb: CONSULTA_COLOR_CIAN } },
+          alignment: { horizontal: "center", vertical: "center", wrapText: true },
+        };
+        const ANIO_STYLE = {
+          font: { bold: true, color: { rgb: "FFFFFF" }, sz: 13, name: FUENTE },
+          fill: { patternType: "solid", fgColor: { rgb: CONSULTA_COLOR_MAGENTA } },
+          alignment: { horizontal: "center", vertical: "center" },
+        };
+        const CUAT_STYLE = {
+          font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12, name: FUENTE },
+          fill: { patternType: "solid", fgColor: { rgb: CONSULTA_COLOR_CIAN } },
+          alignment: { horizontal: "center", vertical: "center" },
+        };
+        const BORDE_FINO = {
+          bottom: { style: "thin", color: { rgb: "CCCCCC" } },
+        };
+        const ESTADO_STYLE = {
+          aprobada: {
+            font: { color: { rgb: "000000" }, strike: true, sz: 11, name: FUENTE },
+            fill: { patternType: "solid", fgColor: { rgb: "EDEDED" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: BORDE_FINO,
+          },
+          habilitada: {
+            font: { color: { rgb: "000000" }, sz: 11, name: FUENTE },
+            fill: { patternType: "solid", fgColor: { rgb: "EAF6EE" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: BORDE_FINO,
+          },
+          bloqueada: {
+            font: { color: { rgb: "000000" }, sz: 11, name: FUENTE },
+            fill: { patternType: "solid", fgColor: { rgb: "FBEAEA" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: BORDE_FINO,
+          },
+        };
+        // La asignatura queda alineada a la izquierda para que se lea mejor,
+        // el resto de las columnas van centradas como en el plan oficial.
+        const ESTADO_STYLE_ASIGNATURA = {
+          aprobada: {
+            ...ESTADO_STYLE.aprobada,
+            alignment: { horizontal: "left", vertical: "center" },
+          },
+          habilitada: {
+            ...ESTADO_STYLE.habilitada,
+            alignment: { horizontal: "left", vertical: "center" },
+          },
+          bloqueada: {
+            ...ESTADO_STYLE.bloqueada,
+            alignment: { horizontal: "left", vertical: "center" },
+          },
+        };
+
+        const NUM_COLS = 6; // Código, Asignatura, Carga, Título intermedio, Correlativas, Estado
+        const ULT_COL = NUM_COLS - 1;
+
+        const rows = [];
+        const merges = [];
+
+        const planTitulo =
+          consultaPlanElegido === "viejo"
+            ? "Ingeniería en Informática (Plan 2014)"
+            : "Ingeniería en Informática (Plan 2022)";
+
+        rows.push([
+          cell(planTitulo, "s", TITLE_STYLE),
+          cell("", "s", TITLE_STYLE),
+          cell("", "s", TITLE_STYLE),
+          cell("", "s", TITLE_STYLE),
+          cell("", "s", TITLE_STYLE),
+          cell("", "s", TITLE_STYLE),
+        ]);
+        merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: ULT_COL } });
+
+        rows.push([
+          cell("CODIGO", "s", HEADER_STYLE),
+          cell("ASIGNATURA", "s", HEADER_STYLE),
+          cell("CARGA HORARIA SEMANAL", "s", HEADER_STYLE),
+          cell("TÍTULO INTERMEDIO", "s", HEADER_STYLE),
+          cell("CORRELATIVAS", "s", HEADER_STYLE),
+          cell("ESTADO", "s", HEADER_STYLE),
+        ]);
+
+        anios.forEach((a) => {
+          if (a.titulo) {
+            const rIdx = rows.length;
+            rows.push([
+              cell(a.titulo, "s", ANIO_STYLE),
+              cell("", "s", ANIO_STYLE),
+              cell("", "s", ANIO_STYLE),
+              cell("", "s", ANIO_STYLE),
+              cell("", "s", ANIO_STYLE),
+              cell("", "s", ANIO_STYLE),
+            ]);
+            merges.push({ s: { r: rIdx, c: 0 }, e: { r: rIdx, c: ULT_COL } });
+          }
+          a.cuats.forEach((cu) => {
+            if (cu.titulo) {
+              const rIdx = rows.length;
+              rows.push([
+                cell(cu.titulo, "s", CUAT_STYLE),
+                cell("", "s", CUAT_STYLE),
+                cell("", "s", CUAT_STYLE),
+                cell("", "s", CUAT_STYLE),
+                cell("", "s", CUAT_STYLE),
+                cell("", "s", CUAT_STYLE),
+              ]);
+              merges.push({ s: { r: rIdx, c: 0 }, e: { r: rIdx, c: ULT_COL } });
+            }
+            cu.items.forEach((it) => {
+              rows.push([
+                cell(it.codigo, "s", ESTADO_STYLE[it.estado]),
+                cell(it.nombre, "s", ESTADO_STYLE_ASIGNATURA[it.estado]),
+                it.carga != null
+                  ? cell(it.carga, "n", ESTADO_STYLE[it.estado])
+                  : cell("-", "s", ESTADO_STYLE[it.estado]),
+                cell(it.esIntermedio ? "X" : "-", "s", ESTADO_STYLE[it.estado]),
+                cell(it.correlativas, "s", ESTADO_STYLE[it.estado]),
+                cell(
+                  CONSULTA_ESTADO_LABEL[it.estado],
+                  "s",
+                  ESTADO_STYLE[it.estado],
+                ),
+              ]);
+            });
+          });
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws["!cols"] = [
+          { wch: 10 },
+          { wch: 46 },
+          { wch: 14 },
+          { wch: 14 },
+          { wch: 16 },
+          { wch: 22 },
+        ];
+        ws["!merges"] = merges;
+        ws["!rows"] = [{ hpx: 30 }, { hpx: 36 }];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Materias");
+        XLSX.writeFile(wb, `materias-${consultaPlanElegido}-unaj.xlsx`);
+        sndSuccess();
       }
 
       function consultaCloseModal() {
@@ -2136,6 +2745,12 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       document
         .getElementById("consultaResultCloseBtn")
         .addEventListener("click", consultaCloseModal);
+      document
+        .getElementById("consultaDescargarPdfBtn")
+        .addEventListener("click", consultaDescargarPDF);
+      document
+        .getElementById("consultaDescargarExcelBtn")
+        .addEventListener("click", consultaDescargarExcel);
       document
         .getElementById("consultaModal")
         .addEventListener("click", (e) => {
