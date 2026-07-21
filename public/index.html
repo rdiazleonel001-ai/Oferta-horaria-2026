@@ -2464,13 +2464,15 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           margin: [0, MARGEN_LATERAL_MM, 0, MARGEN_LATERAL_MM],
           filename: `materias-${consultaPlanElegido}-unaj.pdf`,
           image: { type: "jpeg", quality: 0.98 },
-          html2canvas: {
-            scale: 2,
-            backgroundColor: "#ffffff",
-            useCORS: true,
-            allowTaint: true,
-            logging: false,
-          },
+         html2canvas: {
+  scale: 2,
+  backgroundColor: "#ffffff",
+  useCORS: true,
+  allowTaint: true,
+  logging: false,
+  scrollX: 0,
+  scrollY: 0,
+},
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
           // Solo "css": el modo "legacy" es el que inserta un relleno
           // (clonando el estilo, borde incluido, del elemento siguiente)
