@@ -2978,6 +2978,37 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         const gridClone = document
           .getElementById("calendarGridWrap")
           .cloneNode(true);
+
+        // El calendario en pantalla ubica cada materia con position:absolute
+        // y una altura proporcional a su duración real, calculada para que
+        // encaje en la franja horaria del día. Los títulos largos que pasan
+        // a más de una línea (ver .pdf-export-root .cal-block b) pueden
+        // superar esa altura fija y superponerse con el bloque de abajo.
+        // Para el PDF no necesitamos que la altura sea proporcional a la
+        // hora real: reordenamos cada columna de día como una lista vertical
+        // apilada (sin position:absolute), así cada tarjeta ocupa el alto
+        // que necesite y nunca se pisa con la siguiente.
+        gridClone.querySelectorAll(".cal-day-col").forEach((col) => {
+          const blocks = Array.from(col.querySelectorAll(".cal-block"));
+          blocks.sort(
+            (a, b) => parseFloat(a.style.top || 0) - parseFloat(b.style.top || 0),
+          );
+          col.style.height = "auto";
+          col.style.display = "flex";
+          col.style.flexDirection = "column";
+          col.style.gap = "6px";
+          col.style.padding = "6px";
+          blocks.forEach((block) => {
+            block.style.position = "static";
+            block.style.top = "";
+            block.style.left = "";
+            block.style.width = "100%";
+            block.style.height = "auto";
+            block.style.marginBottom = "0";
+            col.appendChild(block);
+          });
+        });
+
         source.appendChild(gridClone);
 
         const noScheduleClone = document
