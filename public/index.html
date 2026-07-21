@@ -3812,6 +3812,12 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         const gridClone = document
           .getElementById("calendarGridWrap")
           .cloneNode(true);
+        // Igual que con .cal-day-col, el wrap trae max-height:55vh y
+        // overflow-y:auto pensados para la vista en pantalla (con scroll).
+        // En el PDF eso corta el calendario a la altura del viewport en vez
+        // de mostrarlo completo: lo neutralizamos también acá.
+        gridClone.style.maxHeight = "none";
+        gridClone.style.overflow = "visible";
 
         // El calendario en pantalla ubica cada materia con position:absolute
         // y una altura proporcional a su duración real, calculada para que
@@ -3822,12 +3828,16 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         // hora real: reordenamos cada columna de día como una lista vertical
         // apilada (sin position:absolute), así cada tarjeta ocupa el alto
         // que necesite y nunca se pisa con la siguiente.
+        gridClone.querySelectorAll(".cal-grid").forEach((g) => {
+          g.style.alignItems = "start";
+        });
         gridClone.querySelectorAll(".cal-day-col").forEach((col) => {
           const blocks = Array.from(col.querySelectorAll(".cal-block"));
           blocks.sort(
             (a, b) => parseFloat(a.style.top || 0) - parseFloat(b.style.top || 0),
           );
           col.style.height = "auto";
+          col.style.maxHeight = "none";
           col.style.display = "flex";
           col.style.flexDirection = "column";
           col.style.gap = "6px";
