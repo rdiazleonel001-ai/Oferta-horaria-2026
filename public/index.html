@@ -3973,8 +3973,9 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
               const pageWidth = newPdf.internal.pageSize.getWidth();
               const pageHeight = newPdf.internal.pageSize.getHeight();
               const imgWidth = pageWidth - margin * 2;
-              const imgHeight = (canvas.height * imgWidth) / canvas.width;
               const usableHeight = pageHeight - margin * 2;
+              const imgHeightRaw = (canvas.height * imgWidth) / canvas.width;
+              const imgHeight = Math.min(imgHeightRaw, usableHeight);
 
               let heightLeft = imgHeight;
               let position = 0;
