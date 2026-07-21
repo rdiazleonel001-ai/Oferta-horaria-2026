@@ -845,9 +845,9 @@ footer {
   min-width: 260px;
 }
 
-@media (max-width: 1375px) {
+@media (max-width: 1400px) {
     .cal-block {
-        font-size: 0.68rem;
+        font-size: 0.76rem;
     }
 }
 
