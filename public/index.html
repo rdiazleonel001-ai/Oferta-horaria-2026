@@ -3052,7 +3052,9 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             try {
               const canvas = this.prop.canvas;
               const imgData = canvas.toDataURL("image/jpeg", 0.98);
-              const JsPdfCtor = this.prop.pdf.constructor;
+              const JsPdfCtor =
+                (window.jspdf && window.jspdf.jsPDF) ||
+                this.prop.pdf.constructor;
               const margin = 10;
 
               const newPdf = new JsPdfCtor({
