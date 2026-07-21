@@ -901,11 +901,11 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
         let list;
         if (currentCat === "todas") {
   list = [
-    ...subjectsByCat.compartidas.map(s => ({ ...s, _cat: "compartidas" })),
     ...subjectsByCat.info.map(s => ({ ...s, _cat: "info" })),
     ...subjectsByCat.basic.map(s => ({ ...s, _cat: "basic" })),
     ...subjectsByCat.iniciales.map(s => ({ ...s, _cat: "iniciales" })),
     ...subjectsByCat.extra.map(s => ({ ...s, _cat: "extra" })),
+    ...subjectsByCat.compartidas.map(s => ({ ...s, _cat: "compartidas" })),
   ];
 } else {
           list = subjectsByCat[currentCat].map((s) => ({
