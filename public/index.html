@@ -730,7 +730,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-      const BASE_URL = "http://127.0.0.1:8000";
+      const BASE_URL = "";
 
       // IDs reales usados por el sitio original para cada categoría
       const CAREER_IDS = { info: 10, basic: 112, iniciales: 108, extra: 115, compartidas: 113 };
@@ -4714,7 +4714,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
       const fbApp = initializeApp(firebaseConfig);
       const db = getDatabase(fbApp);
 
-      const BASE_URL = "http://127.0.0.1:8000";
+      const BASE_URL = "";
 
       let currentTeacherId = null;
       let currentCommentsRef = null;
