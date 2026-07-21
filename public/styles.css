@@ -1329,17 +1329,19 @@ footer {
    ===================================================== */
 
 @media (max-width: 1024px) {
-  body { font-size: 21px; }
+  .cal-block{
+    font-size: 0.7rem;
+
+  }
+  body { font-size: 21px; 
+  }
   .layout {
     grid-template-columns: 380px 1fr;
     gap: 20px;
     padding: 22px 24px 44px;
   }
   header { padding: 24px 24px 18px; }
-  .cal-block{
-    font-size: 0.7rem;
-
-  }
+  
 }
 
 @media (max-width: 860px) {
