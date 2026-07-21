@@ -3839,6 +3839,38 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             block.style.width = "100%";
             block.style.height = "auto";
             block.style.marginBottom = "0";
+
+            // El fondo de cada tarjeta viene con muy poca opacidad (0.13),
+            // pensado para verse sobre el fondo oscuro de la app. El PDF
+            // se genera siempre sobre fondo blanco (wrapper.style.background
+            // = "#ffffff"), y con esa opacidad tan baja el color prácticamente
+            // no se ve ahí: por eso el PDF sale "todo blanco". Repintamos
+            // cada tarjeta con una opacidad mayor, calibrada para fondo claro.
+            const borderColor = block.style.borderColor;
+            let rgb = null;
+            if (borderColor) {
+              // El navegador normaliza border-color a "rgb(r, g, b)" al
+              // leerlo desde style, tanto si se seteó como hex o como rgb.
+              const rgbMatch = borderColor.match(
+                /rgba?\((\d+),\s*(\d+),\s*(\d+)/,
+              );
+              if (rgbMatch) {
+                rgb = rgbMatch.slice(1, 4).map((v) => parseInt(v, 10));
+              }
+            }
+            if (rgb) {
+              const [r, g, b] = rgb;
+              block.style.background = `rgba(${r}, ${g}, ${b}, 0.22)`;
+              block.style.borderWidth = "1.5px";
+              const strong = block.querySelector("b");
+              if (strong) {
+                // Oscurecemos el color del título para que tenga contraste
+                // suficiente sobre el fondo blanco del PDF.
+                const darken = (v) => Math.round(v * 0.65);
+                strong.style.color = `rgb(${darken(r)}, ${darken(g)}, ${darken(b)})`;
+              }
+            }
+
             col.appendChild(block);
           });
         });
