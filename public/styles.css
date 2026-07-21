@@ -810,7 +810,7 @@ footer {
 /* ---------- MODAL DE MI HORARIO (calendario) ---------- */
 .modal-card.calendar-card {
   max-width: 97vw;
-  width: 97vw;
+  width: 84vw;
   height: 94vh;
   max-height: 94vh;
 }
@@ -932,6 +932,7 @@ footer {
   border-radius: 10px;
   margin-bottom: 17px;
   -webkit-overflow-scrolling: touch;
+  padding-bottom: 200px;
 }
 .calendar-grid-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
 .calendar-grid-wrap::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
