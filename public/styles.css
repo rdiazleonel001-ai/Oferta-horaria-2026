@@ -809,21 +809,28 @@ footer {
 
 /* ---------- MODAL DE MI HORARIO (calendario) ---------- */
 .modal-card.calendar-card {
-  position: relative;
   max-width: 97vw;
   width: 84vw;
   height: 94vh;
   max-height: 94vh;
 }
-.modal-card.calendar-card:fullscreen,
-.modal-card.calendar-card.cal-fs-fallback {
-  width: 100vw;
-  height: 100vh;
-  max-width: 100vw;
-  max-height: 100vh !important;
-  border-radius: 0;
+.calendar-grid-outer {
+  position: relative;
+  margin-bottom: 17px;
 }
-.modal-card.calendar-card.cal-fs-fallback {
+.calendar-grid-outer .calendar-grid-wrap {
+  margin-bottom: 0;
+}
+#calendarGridWrap:fullscreen,
+#calendarGridWrap.cal-fs-fallback {
+  max-height: 100vh;
+  height: 100vh;
+  width: 100vw;
+  border-radius: 0;
+  background: var(--panel, #0b0f1a);
+  padding: 24px 18px 60px;
+}
+#calendarGridWrap.cal-fs-fallback {
   position: fixed;
   inset: 0;
   z-index: 1001;

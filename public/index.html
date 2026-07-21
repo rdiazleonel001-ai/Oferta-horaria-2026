@@ -344,24 +344,25 @@
           Todavía no agregaste ninguna materia. Buscá una comisión y tocá
           "Agregar al planificador".
         </div>
-        <div id="calendarGridWrap" class="calendar-grid-wrap">
-          <div id="calendarNoTimeRow" class="cal-notime-row"></div>
-          <div id="calendarGrid" class="cal-grid"></div>
+        <div class="calendar-grid-outer">
+          <div id="calendarGridWrap" class="calendar-grid-wrap">
+            <div id="calendarNoTimeRow" class="cal-notime-row"></div>
+            <div id="calendarGrid" class="cal-grid"></div>
+          </div>
+          <button
+            class="cal-fullscreen-btn"
+            id="calendarFullscreenBtn"
+            type="button"
+            title="Pantalla completa"
+          >
+            <span id="calendarFsIcon"></span>
+          </button>
         </div>
        <div id="calendarNoSchedule" class="calendar-no-schedule"></div>
         <div id="calendarList" class="calendar-list"></div>
         <div class="modal-actions">
           <button class="btn-modal cancel" id="calendarCloseBtn">Cerrar</button>
         </div>
-
-        <button
-          class="cal-fullscreen-btn"
-          id="calendarFullscreenBtn"
-          type="button"
-          title="Pantalla completa"
-        >
-          <span id="calendarFsIcon"></span>
-        </button>
       </div>
     </div>
 
@@ -2947,8 +2948,8 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
           if (selectedSubject) syncCalendarButtons();
         });
 
-      /* ---------------- PANTALLA COMPLETA (modal Mis Horarios) ---------------- */
-      const calendarCardEl = document.querySelector(".modal-card.calendar-card");
+      /* ---------------- PANTALLA COMPLETA (solo la grilla del horario) ---------------- */
+      const calendarCardEl = document.getElementById("calendarGridWrap");
       const calendarFsBtn = document.getElementById("calendarFullscreenBtn");
       const calendarFsIcon = document.getElementById("calendarFsIcon");
 
