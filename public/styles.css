@@ -3,7 +3,7 @@
   --panel: #0b1220;
   --panel-2: #0e1729;
   --line: #1c2b45;
-  --cyan: #00e5ff;
+  --cyan: #06B6D4;
   --violet: #7c4dff;
   --green: #39ff88;
   --red: #ff4d6d;
@@ -934,7 +934,7 @@ footer {
 
 #commentsInput {
   width: 100%;
-  background: #060a13;
+  background: #fff;
   color: var(--text);
   border: 1px solid var(--line);
   border-radius: 8px;
