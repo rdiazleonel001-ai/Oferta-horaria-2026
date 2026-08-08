@@ -68,6 +68,75 @@
       html[data-theme="light"] .consulta-equiv-chip {
         background: rgba(0,180,210,0.12);
       }
+      .cs-line-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin: 4px 0;
+      }
+      .cs-line-text {
+        font-size: 0.9rem;
+      }
+      .cs-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .cs-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: rgba(0,229,255,0.08);
+        border: 1px solid rgba(0,229,255,0.25);
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1.3;
+        white-space: nowrap;
+        color: var(--accent, #00e5ff);
+      }
+      .cs-tag-icon {
+        width: 13px;
+        height: 13px;
+        flex-shrink: 0;
+        display: block;
+      }
+      .cs-tag-edificio {
+        background: rgba(0,229,255,0.08);
+        border-color: rgba(0,229,255,0.25);
+      }
+      .cs-tag-aula {
+        background: rgba(255,255,255,0.06);
+        border-color: rgba(255,255,255,0.15);
+        color: inherit;
+      }
+      .cs-tag-pendiente {
+        background: rgba(255,165,0,0.1);
+        border-color: rgba(255,165,0,0.35);
+        color: #ffa500;
+      }
+      html[data-theme="light"] .cs-tag-pendiente {
+        background: rgba(200,120,0,0.12);
+        border-color: rgba(200,120,0,0.35);
+        color: #a35c00;
+      }
+      html[data-theme="light"] .cs-tag {
+        background: rgba(0,180,210,0.12);
+        border-color: rgba(0,180,210,0.3);
+      }
+      html[data-theme="light"] .cs-tag-aula {
+        background: rgba(0,0,0,0.05);
+        border-color: rgba(0,0,0,0.12);
+      }
+      @media (max-width: 480px) {
+        .cs-line-row {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
+        }
+      }
       .consulta-intermedio-faltan-btn {
         margin-top: 10px;
         width: 100%;
@@ -2969,6 +3038,16 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
 
       const PENDIENTE_ASIGNAR = "Aula Pendiente de asignar";
 
+      // Iconos SVG inline (en vez de un webfont externo tipo Tabler)
+      // para que siempre se vean, sin depender de que cargue un CDN.
+      // currentColor hace que hereden el color de texto del tag padre.
+      const ICON_BUILDING =
+        '<svg class="cs-tag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/></svg>';
+      const ICON_DOOR =
+        '<svg class="cs-tag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 12v.01"/><path d="M3 21h18"/><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/></svg>';
+      const ICON_CLOCK =
+        '<svg class="cs-tag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
+
       // Determina si una comisión ya tiene el aula/edificio confirmados
       // (assignament.id === 3 o descripción "Asignada"/"Asignado").
       // Si está en id 1, 2 o la descripción dice "No Asignada" / "Pendiente...",
@@ -4529,13 +4608,40 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             <div class="cs-line cs-muted">Sin días/horarios informados.</div>
           </div>`;
           } else {
-            const lines = flatDayRows
+            const rowsHtml = flatDayRows
               .filter((d) => !isAsincronica(d.modalidad))
               .map((d) => {
                 let line = `${d.dia} ${d.startHour && d.endHour ? `${d.startHour} - ${d.endHour}` : d.startHour || "-"}`;
                 if (d.modalidad) line += ` (${d.modalidad})`;
-                if (d.aula) line += ` • ${d.aula}`;
-                return line;
+
+                const tags = [];
+                const pendiente = d.edificio === PENDIENTE_ASIGNAR;
+
+                if (pendiente) {
+                  // Edificio y aula comparten el mismo texto de
+                  // "pendiente de asignar": mostramos un único tag en
+                  // vez de repetirlo dos veces.
+                  tags.push(
+                    `<span class="cs-tag cs-tag-pendiente">${ICON_CLOCK} Aula y edificio pendientes de asignar</span>`,
+                  );
+                } else {
+                  if (d.edificio) {
+                    tags.push(
+                      `<span class="cs-tag cs-tag-edificio">${ICON_BUILDING} ${escapeHtml(d.edificio)}</span>`,
+                    );
+                  }
+                  if (d.aula) {
+                    tags.push(
+                      `<span class="cs-tag cs-tag-aula">${ICON_DOOR} Aula ${escapeHtml(d.aula)}</span>`,
+                    );
+                  }
+                }
+
+                return `
+                  <div class="cs-line-row">
+                    <span class="cs-line-text">${escapeHtml(line)}</span>
+                    ${tags.length ? `<span class="cs-tags">${tags.join("")}</span>` : ""}
+                  </div>`;
               });
             const obsSet = Array.from(
               new Set(flatDayRows.map((d) => d.observations).filter(Boolean)),
@@ -4544,7 +4650,7 @@ subjectsByCat.extra = Array.isArray(dExtra) ? dExtra : (dExtra.items || []);
             let html = `
           <div class="cs-section">
             <div class="cs-label">Horarios / Señales:</div>
-            ${lines.map((l) => `<div class="cs-line">${escapeHtml(l)}</div>`).join("")}
+            ${rowsHtml.join("")}
           </div>`;
 
             if (obsSet.length > 0) {
